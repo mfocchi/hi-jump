@@ -3,10 +3,10 @@ import pinocchio
 import optim_params as conf
 from crocoddyl import (ActivationModelWeightedQuad, ActivationModelInequality, ActuationModelFreeFloating, ActionModelImpact, CallbackDDPLogger,
                        CallbackDDPVerbose, CallbackSolverDisplay, ContactModel3D, ContactModelMultiple, CostModelCoM,
-                       CostModelControl, CostModelFrameTranslation, CostModelFrameVelocity, CostModelState,
+                       CostModelControl, CostModelFrameTranslation, CostModelForceLinearCone, CostModelState,
                        CostModelSum, DifferentialActionModelFloatingInContact, IntegratedActionModelEuler,
                        ImpulseModelMultiple, ImpulseModel3D, ShootingProblem, SolverDDP, SolverFDDP, StatePinocchio,
-                       a2m, displayTrajectory, loadHyQ, m2a)
+                       a2m, displayTrajectory, loadHyQ, m2a, CostDataForceLinearCone, ActionDataImpact)
 
 
 def plotSolution(rmodel, xs, us):
@@ -147,6 +147,17 @@ class SimpleQuadrupedalGaitProblem:
         q0 = self.rmodel.referenceConfigurations[conf.home_config]
         self.rmodel.defaultState = np.concatenate([m2a(q0), np.zeros(self.rmodel.nv)])
         self.firstStep = True  
+        
+        A = np.zeros((4,3))
+        Tx = np.cross(np.array([1.0, 0.0, 0.0]), conf.contact_normal)
+        Tx /= np.linalg.norm(Tx)
+        Ty = np.cross(conf.contact_normal, Tx)
+        A[0,:] =  Tx - conf.mu*conf.contact_normal
+        A[1,:] = -Tx - conf.mu*conf.contact_normal
+        A[2,:] =  Ty - conf.mu*conf.contact_normal
+        A[3,:] = -Ty - conf.mu*conf.contact_normal
+        print "A\n", A
+        self.A_friction_cones = A
 
     def createJumpingProblem(self, x0, jumpHeight, jumpLength, timeStep, groundKnots, flyingKnots):
         q0 = a2m(x0[:self.rmodel.nq])
@@ -206,6 +217,26 @@ class SimpleQuadrupedalGaitProblem:
         loco3dModel += landed
         
         problem = ShootingProblem(x0, loco3dModel, loco3dModel[-1])
+        
+        # QUICK FIX: Set contactData on CostDataForceLinearCone 
+        for m in problem.runningDatas + [problem.terminalData]:
+            # skip the impact phase
+            if isinstance(m, ActionDataImpact): continue
+                
+            contacts = m.differential.contact.contacts
+            costs = m.differential.costs.costs
+            
+            # skip the flying phase
+            if len(contacts)==0: continue
+                
+            for foot_id in four_foot_support:
+                contact_key = [key for key in contacts.keys() if str(foot_id) in key]
+                friction_key = [key for key in costs.keys() if str(foot_id) in key]
+                assert(len(contact_key)==1)
+                assert(len(friction_key)==1)
+                assert(isinstance(costs[friction_key[0]], CostDataForceLinearCone))
+                costs[friction_key[0]].contact = contacts[contact_key[0]]
+        
         return problem
 
  
@@ -222,17 +253,19 @@ class SimpleQuadrupedalGaitProblem:
         # is by default a floating-base system
         actModel = ActuationModelFreeFloating(self.rmodel)
 
+        # Creating the cost model for a contact phase
+        costModel = CostModelSum(self.rmodel, actModel.nu)
+
         # Creating a 3D multi-contact model, and then including the supporting
         # foot
         contactModel = ContactModelMultiple(self.rmodel)
+        
         for i in supportFootIds:
             supportContactModel = ContactModel3D(self.rmodel, i, ref=[0., 0., 0.], gains=[conf.kp_contact, conf.kd_contact])
             contactModel.addContact('contact_' + str(i), supportContactModel)
-
-        # Creating the cost model for a contact phase
-        costModel = CostModelSum(self.rmodel, actModel.nu)
-        
-
+            
+            costFriction = CostModelForceLinearCone(self.rmodel, supportContactModel, self.A_friction_cones, nu=actModel.nu)
+            costModel.addCost("frictionCone_"+str(i), costFriction, conf.weight_friction)
         
         if isinstance(comTask, np.ndarray):
             comTrack = CostModelCoM(self.rmodel, comTask, actModel.nu)

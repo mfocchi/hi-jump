@@ -25,6 +25,9 @@ timeStep = 1.0e-2
 groundKnots = 45
 flyingKnots = 20
 
+mu = 0.3
+contact_normal = np.array([0.0, 0.0, 1.0])
+
 
 #weights
 weight_com = 1e04
@@ -32,7 +35,7 @@ weight_com = 1e04
 weight_array_postural = np.array([0] * 3 + [500.] * 3 + [0.01] * (nv - 6) + [1.] * nv)
 weight_postural = 1e-01
 weight_control = 1e-04
-
+weight_friction = 1e-1
         
 
 weight_foot_pos_impact = 1e07

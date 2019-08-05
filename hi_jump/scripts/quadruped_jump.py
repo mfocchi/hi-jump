@@ -104,14 +104,19 @@ quat = xs[:,3:7]
 euler = np.array([euler_from_quaternion(quat[i,:], axes='szyx') for i in range(len(quat))])
 
 # rotate GRF to world frame
+v_com = np.zeros((len(i_no_impact),3))
 for i in range(f.shape[0]):
     m = ddp.problem.runningModels[i_no_impact[i]]
     d = ddp.problem.runningDatas[i_no_impact[i]]
+    v_com[i,:] = d.differential.pinocchio.vcom[0].A1
+#    if(len(d.differential.f)==0):        
+        #print "Time step %d, CoM acc:"%(i), (v_com[i,:]-v_com[i-1,:])/conf.timeStep        
     for j, frame_name in enumerate(m.differential.contact.contacts.keys()):
         # get rotation matrix
         frame_index = m.differential.contact.contacts[frame_name].frame
         R = m2a(d.differential.pinocchio.oMf[frame_index].rotation)
         f[i,j*3:(j+1)*3] = R.dot(f[i,j*3:(j+1)*3]) 
+
 
 #interpolate
 q_cont = interpolate_trajectory(q, conf.timeStep, conf.dt)

@@ -236,6 +236,30 @@ class ControlThread(threading.Thread):
             plt.ylabel("f "+str(i), fontsize=10)
             plt.grid()
             if i==0: plt.legend(loc="best")
+                
+    def plotCones(self, f, f_des):
+        #this is a cross check for the friction cone constraints
+        N_f = f.shape[0]
+        N_f_des = f_des.shape[0]
+        mu_f = np.zeros(N_f)
+        mu_f_des = np.zeros(N_f_des)
+        
+  
+        plt.figure()        
+        for j in range(4):
+            plt.subplot(2, 2, j+1)
+            for i in range(f_des.shape[0]):            
+                if f_des[i,3*j+2] != 0:  mu_f_des[i] = np.linalg.norm(f_des[i,3*j:3*j+2])/f_des[i,3*j+2]
+            for i in range(f.shape[0]):
+                if f[i,3*j+2] != 0:  mu_f[i] = np.linalg.norm(f[i,3*j:3*j+2])/f[i,3*j+2]
+            
+
+            plt.plot(mu_f, label="actual mu")
+            plt.plot(mu_f_des, label="desired mu", linestyle='--')
+            plt.legend()
+            plt.ylabel("mu", fontsize=10)
+
+               
     
 def talker(p):
 
@@ -335,6 +359,8 @@ def talker(p):
     p.plotJoints(qd_array, qd_des_array, label="qd")
     p.plotJoints(tau_array, tau_des_array, label="tau")
     p.plotGRF(np.array(p.f_log), f_des_array)
+    p.plotCones(np.array(p.f_log), f_des_array)
+    
     
     print 'de registering...'
     p.deregister_node()
@@ -344,21 +370,23 @@ def talker(p):
         plt.plot(x_base_array[:,i], label='x base '+str(i))
         plt.plot(x_base_des_array[:,i], '--', label='x base des '+str(i))
     plt.legend()
-    
+#    
     plt.figure()
     for i in range(3):
         plt.plot(v_base_array[:,i], label='v base '+str(i))
         plt.plot(v_base_des_array[:,i], '--', label='v base des '+str(i))
     plt.legend()
     plt.show()
-    
-    plt.figure()
-    for i in range(3):
-        plt.plot(euler_array[:,i], label='euler '+str(i))
-        plt.plot(euler_des_array[:,i], '--', label='euler des '+str(i))
-    plt.legend()
-    plt.show()
+#    
+#    plt.figure()
+#    for i in range(3):
+#        plt.plot(euler_array[:,i], label='euler '+str(i))
+#        plt.plot(euler_des_array[:,i], '--', label='euler des '+str(i))
+#    plt.legend()
+#    plt.show()
+#
 
+    
 
 #    plt.figure()    
 #    plt.plot(time_start[1:]-time_start[:-1], ' *')

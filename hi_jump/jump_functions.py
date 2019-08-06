@@ -311,10 +311,13 @@ class SimpleQuadrupedalGaitProblem:
         stateReg = CostModelState(self.rmodel, self.state, self.rmodel.defaultState, 0,
                                   ActivationModelWeightedQuad(conf.weight_array_postural_impact**2))
                                                                                                  
-        #2 - COST                                 
+        #2 - COST to have the feet in a certain position                                 
         costModel.addCost("stateReg", stateReg, conf.weight_postural_impact)
         if swingFootTask is not None:
             for i in swingFootTask:
+                #
+                weights = np.array([conf.weight_foot_pos_impact_xy, conf.weight_foot_pos_impact_xy, conf.weight_foot_pos_impact_z])
+                activation = ActivationModelWeightedQuad(weights)
                 footTrack = \
                     CostModelFrameTranslation(self.rmodel,
                                               i.frameId,

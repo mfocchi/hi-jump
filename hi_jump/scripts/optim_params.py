@@ -30,7 +30,7 @@ contact_normal = np.array([0.0, 0.0, 1.0])
 
 
 #weights
-weight_com = 1e04
+weight_com = 0e0
 
 weight_array_postural = np.array([0] * 3 + [500.] * 3 + [0.01] * (nv - 6) + [1.] * nv)
 weight_postural = 1e-01

@@ -20,6 +20,28 @@ def loadHyQ(modelPath='/opt/openrobots/share/example-robot-data'):
     robot.model.referenceConfigurations[conf.home_config] = robot.q0
     return robot
     
+class CallbackJump:
+    def __init__(self, level=0):
+        self.level = level
+
+    def __call__(self, solver):
+        cost_total = {}
+        for i, (m, d) in enumerate(zip(solver.problem.runningModels, solver.problem.runningDatas)):
+            if "differential" in d.__dict__.keys():
+                costs_data = d.differential.costs.costs
+                costs_model = m.differential.costs.costs
+            else:
+                costs_data = d.costs.costs
+                costs_model = m.costs.costs
+                
+            for key in costs_data.keys():
+                if key not in cost_total:
+                    cost_total[key] = 0.0
+                cost_total[key] += costs_model[key].weight * costs_data[key].cost
+        print ""
+        for key in np.sort(cost_total.keys()):
+            print "   %18s \t %10.2f"%(key, cost_total[key])
+                   
 # Loading the HyQ model
 ROBOT =  loadHyQ()
 
@@ -54,9 +76,9 @@ ddp = crocoddyl.SolverFDDP(
 # Added the callback functions
 print('*** SOLVE  jumpin ***')
 
-ddp.callback = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose()]
+ddp.callback = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), CallbackJump()]
 if conf.ENABLE_DISPLAY:
-    ddp.callback += [crocoddyl.CallbackSolverDisplay(ROBOT, 4, 1, conf.cameraTF)]
+    ddp.callback += [crocoddyl.CallbackSolverDisplay(ROBOT, -1, 1, conf.cameraTF)]
 
 # Solving the problem with the DDP solver
 ddp.th_stop = conf.th_stop

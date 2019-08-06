@@ -210,6 +210,14 @@ class SimpleQuadrupedalGaitProblem:
             self.createSwingFootModel(timeStep, four_foot_support, comTask=comRef + m2a(f0))
             for k in range(groundKnots)
         ]
+        
+        #terminal state        
+        terminalVelocity = CostModelState(self.rmodel, self.state, self.rmodel.defaultState, landed[-1].differential.actuation.nu,
+                                  ActivationModelWeightedQuad(conf.weight_array_postural_terminal_velocity**2))
+        landed[-1].differential.costs.addCost("terminalVelocity", terminalVelocity, conf.weight_postural_terminal_velocity)
+        
+        
+        
         loco3dModel += takeOff
         loco3dModel += flyingUpPhase
         loco3dModel += flyingDownPhase

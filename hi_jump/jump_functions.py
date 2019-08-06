@@ -330,8 +330,10 @@ class SimpleQuadrupedalGaitProblem:
                     CostModelFrameTranslation(self.rmodel,
                                               i.frameId,
                                               m2a(i.oXf.translation),
-                                              nu=0)
-                costModel.addCost("footTrack_" + str(i.frameId), footTrack, conf.weight_foot_pos_impact)
+                                              nu=0,
+                                              activation = activation)
+                costModel.addCost("footTrack_" + str(i.frameId), footTrack, 1.0)
+                
                 # impactFootVelCost = CostModelFrameVelocity(self.rmodel, i.frameId, nu=0)
                 # costModel.addCost("impactVel_"+str(i),
                 #                   impactFootVelCost, 1e6)

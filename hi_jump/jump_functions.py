@@ -186,10 +186,10 @@ class SimpleQuadrupedalGaitProblem:
         flyingUpPhase = [
             self.createSwingFootModel(timeStep, [],
                                       np.array([0.5*jumpLength[0], 0.5*jumpLength[1],  jumpHeight]) * (k + 1) / flyingKnots + comRef)
-            for k in range(flyingKnots-1)
+            for k in range(flyingKnots)
         ]
-        flyingUpPhase += [self.createSwingFootModelModified(timeStep, [], 
-                                                            np.array([0.5*jumpLength[0], 0.5*jumpLength[1],  jumpHeight]) + comRef)]
+#        flyingUpPhase += [self.createSwingFootModel(timeStep, [], 
+#                                                    np.array([0.5*jumpLength[0], 0.5*jumpLength[1],  jumpHeight]) + comRef)]
 
         flyingDownPhase = []
         for k in range(flyingKnots):
@@ -286,55 +286,6 @@ class SimpleQuadrupedalGaitProblem:
         model = IntegratedActionModelEuler(dmodel)
         model.timeStep = timeStep
         return model
-        
-    def createSwingFootModelModified(self, timeStep, supportFootIds, comTask=None):
-        """ Action model for a swing foot phase.
-
-        :param timeStep: step duration of the action model
-        :param supportFootIds: Ids of the constrained feet
-        :param comTask: CoM task
-        :param swingFootTask: swinging foot task
-        :return action model for a swing foot phase
-        """
-        # Creating the action model for floating-base systems. A walker system
-        # is by default a floating-base system
-        actModel = ActuationModelFreeFloating(self.rmodel)
-
-        # Creating a 3D multi-contact model, and then including the supporting
-        # foot
-        contactModel = ContactModelMultiple(self.rmodel)
-        for i in supportFootIds:
-            supportContactModel = ContactModel3D(self.rmodel, i, ref=[0., 0., 0.], gains=[0., 0.])
-            contactModel.addContact('contact_' + str(i), supportContactModel)
-
-        # Creating the cost model for a contact phase
-        costModel = CostModelSum(self.rmodel, actModel.nu)
-        
-#                                  
-#        models[high].differential.costs['com'].cost.activation = 
-        
-        if isinstance(comTask, np.ndarray):
-            actIn = ActivationModelInequality(np.array([-1.0, -1.0, comTask[2] + 0.1]), 
-                                                             np.array([1.0, 1.0, 10.0]))
-            comTrack = CostModelCoM(self.rmodel, np.zeros(3), actModel.nu, activation=actIn)
-            costModel.addCost("comTrack", comTrack, conf.weight_com)
-            print "Desired CoM height", comTask[2]+0.1
-
-        stateReg = CostModelState(self.rmodel, self.state, self.rmodel.defaultState, actModel.nu,
-                                  ActivationModelWeightedQuad(conf.weight_array_postural**2))
-                         
-                                  
-                                  
-        ctrlReg = CostModelControl(self.rmodel, actModel.nu)
-        costModel.addCost("stateReg", stateReg, conf.weight_postural)
-        costModel.addCost("ctrlReg", ctrlReg, conf.weight_control)
-
-        # Creating the action model for the KKT dynamics with simpletic Euler
-        # integration scheme
-        dmodel = DifferentialActionModelFloatingInContact(self.rmodel, actModel, contactModel, costModel)
-        model = IntegratedActionModelEuler(dmodel)
-        model.timeStep = timeStep
-        return model        
 
 
     def createImpactModel(self, supportFootIds, swingFootTask):

@@ -50,7 +50,7 @@ kd_contact = 1.0/timeStep
 
 
 #terminal state
-weight_array_postural_terminal_velocity = np.array([0] * 3 + [0.] * 3 + [0.0] * (nv - 6) + [1.] * nv)
+weight_array_postural_terminal_velocity = np.array([0] * 3 + [1.] * 3 + [0.0] * (nv - 6) + [1.] * nv)
 weight_postural_terminal_velocity = 1e05
 
 #controller 

@@ -76,14 +76,15 @@ ddp = crocoddyl.SolverFDDP(gait.createJumpingProblem(x0, conf))
 # Added the callback functions
 print('*** SOLVE  jumpin ***')
 
-ddp.callback = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), CallbackJump()]
+callbacks = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), CallbackJump()]
 if conf.ENABLE_DISPLAY:
-    ddp.callback += [crocoddyl.CallbackSolverDisplayParallel(ROBOT, -1, 1, conf.cameraTF)]
+    callbacks += [crocoddyl.CallbackSolverDisplayParallel(ROBOT, -1, 1, conf.cameraTF)]
 
 # Solving the problem with the DDP solver
 ddp.th_stop = conf.th_stop
+ddp.callback = callbacks
 ddp.solve(
-    maxiter=conf.maxiter,
+    maxiter=3,
     regInit=conf.reginit,
     init_xs=[rmodel.defaultState] * len(ddp.models()),
     init_us=[
@@ -91,6 +92,15 @@ ddp.solve(
             m, crocoddyl.IntegratedActionModelEuler) else np.zeros(0)
         for m, d in zip(ddp.problem.runningModels, ddp.problem.runningDatas)
     ])
+    
+print "First optimization finished"
+conf.weight_com = 0.0
+xs, us = ddp.xs, ddp.us
+ddp = crocoddyl.SolverFDDP(gait.createJumpingProblem(x0, conf))
+ddp.callback = callbacks
+ddp.th_stop = conf.th_stop
+time.sleep(2.0)
+ddp.solve(maxiter=conf.maxiter, regInit=conf.reginit, init_xs=xs, init_us=us)
 
 # Defining the final state as initial one for the next phase
 x0 = ddp.xs[-1]

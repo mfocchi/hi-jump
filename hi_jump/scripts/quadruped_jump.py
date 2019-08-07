@@ -9,6 +9,7 @@ from hi_jump.jump_functions import interpolate_trajectory
 import hi_jump.utils as utils
 import optim_params as conf
 from tf.transformations import euler_from_quaternion
+import time
 
 def loadHyQ(modelPath='/opt/openrobots/share/example-robot-data'):
     URDF_FILENAME = "hyq_last.urdf"
@@ -78,7 +79,7 @@ print('*** SOLVE  jumpin ***')
 
 ddp.callback = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), CallbackJump()]
 if conf.ENABLE_DISPLAY:
-    ddp.callback += [crocoddyl.CallbackSolverDisplay(ROBOT, -1, 1, conf.cameraTF)]
+    ddp.callback += [crocoddyl.CallbackSolverDisplayParallel(ROBOT, -1, 1, conf.cameraTF)]
 
 # Solving the problem with the DDP solver
 ddp.th_stop = conf.th_stop
@@ -97,6 +98,7 @@ x0 = ddp.xs[-1]
 
 # Display the entire motion
 if conf.ENABLE_DISPLAY:
+    time.sleep(2.0)
     ts = [m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
     utils.displayPhaseMotion(ROBOT, ddp.xs, ts)
 

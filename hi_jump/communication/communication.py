@@ -39,7 +39,9 @@ from jet_leg.hyq_kinematics import HyQKinematics
 from utils import Utils
 from jet_leg.math_tools import Math
 
-
+from ros_impedance_controller.srv import set_pids
+from ros_impedance_controller.srv import set_pidsRequest
+from ros_impedance_controller.msg import pid
 #important
 np.set_printoptions(precision = 3, linewidth = 200, suppress = True)
 
@@ -112,12 +114,31 @@ class ControlThread(threading.Thread):
         self.freeze_base = ros.ServiceProxy("/"+self.robot_name+"/freeze_base",Empty)
         self.pause_physics_client = ros.ServiceProxy('/gazebo/pause_physics', Empty)
         self.unpause_physics_client = ros.ServiceProxy('/gazebo/unpause_physics', Empty)
-
+        self.set_pd_service = ros.ServiceProxy("/"+self.robot_name+"/ros_impedance_controller/set_pids", set_pids)
+   
 
     def loadConfig(self):
         return
 
+    def setPDs(self, kp, kd):
+        
+        #create the message
+        req_msg = set_pidsRequest()
+        req_msg.data = []
      
+        #fill in the message with des values for kp kd     
+        for i in range(len(self.joint_names)):            
+            joint_pid = pid()
+            joint_pid.joint_name = self.joint_names[i]
+            joint_pid.p_value = kp 
+            joint_pid.d_value = kd
+            joint_pid.i_value = 0.0
+            req_msg.data += [joint_pid]
+            
+        #send request and get response (in this case none)
+        self.set_pd_service(req_msg)
+
+    
 
 
     def _receive_contact(self, msg):
@@ -172,7 +193,7 @@ class ControlThread(threading.Thread):
         self.q = self.u.mapFromRos(msg.position)
         self.qd = self.u.mapFromRos(msg.velocity)
         self.tau = self.u.mapFromRos(msg.effort)
-    
+        self.joint_names = msg.name
         self.numberOfReceivedMessages+=1
         
     def send_des_jstate(self, q_des, qd_des, tau_ffwd):
@@ -269,6 +290,8 @@ def talker(p):
     #create the objects
     kin = HyQKinematics()
     math = Math()
+
+    p.setPDs(500.0,26.0)
 
     #load configs
     p.loadConfig()
@@ -377,6 +400,7 @@ def talker(p):
         plt.plot(v_base_des_array[:,i], '--', label='v base des '+str(i))
     plt.legend()
     plt.show()
+    
 #    
 #    plt.figure()
 #    for i in range(3):

@@ -30,19 +30,20 @@ contact_normal = np.array([0.0, 0.0, 1.0])
 
 
 #weights
-weight_com = 0e0
+weight_array_com = np.array([1., 0., 1.0])
+weight_com = 1e4
 
 
-weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.] * nv)
+weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.1] * nv)
 weight_postural = 1e-02
 weight_control = 1e-04
-weight_friction = 1e1
+weight_friction = 0*1e1
         
 
-weight_foot_pos_impact_xy = 1e3
+weight_foot_pos_impact_xy = 1e4
 weight_foot_pos_impact_z = 1e07
-weight_array_postural_impact =  np.array([0.]*3 + [0.]*3 + [10.0] * (nv - 6) + [10] * nv)
-weight_postural_impact = 1e0
+weight_array_postural_impact =  np.array([0.]*3 + [0.]*3 + [10.0] * (nv - 6) + [10.] * nv)
+weight_postural_impact = 1e1
 #impact pos
 kp_contact = 0.
 kd_contact = 1.0/timeStep
@@ -50,7 +51,7 @@ kd_contact = 1.0/timeStep
 
 #terminal state
 weight_array_postural_terminal_velocity = np.array([0] * 3 + [0.] * 3 + [0.0] * (nv - 6) + [1.] * nv)
-weight_postural_terminal_velocity = 1e06
+weight_postural_terminal_velocity = 1e05
 
 #controller 
 dt  = 0.001

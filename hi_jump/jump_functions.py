@@ -276,7 +276,7 @@ class SimpleQuadrupedalGaitProblem:
             costModel.addCost("frictionCone_"+str(i), costFriction, conf.weight_friction)
         
         if isinstance(comTask, np.ndarray):
-            comTrack = CostModelCoM(self.rmodel, comTask, actModel.nu)
+            comTrack = CostModelCoM(self.rmodel, comTask, actModel.nu, ActivationModelWeightedQuad(conf.weight_array_com**2))
             costModel.addCost("comTrack", comTrack, conf.weight_com)
 
 

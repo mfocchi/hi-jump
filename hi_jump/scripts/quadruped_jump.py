@@ -64,14 +64,13 @@ lhFoot = 'lh_foot'
 rhFoot = 'rh_foot'
 
 #TODO NOT CLEAR
-gait = quadruped.SimpleQuadrupedalGaitProblem(rmodel, lfFoot, rfFoot, lhFoot, rhFoot)
+gait = quadruped.SimpleQuadrupedalGaitProblem(conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot)
 
 print('Building the action models')
 
 
 # Creating a jumping problem
-ddp = crocoddyl.SolverFDDP(
-    gait.createJumpingProblem(x0, conf.jumpHeight, conf.jumpLength, conf.timeStep, conf.groundKnots, conf.flyingKnots))
+ddp = crocoddyl.SolverFDDP(gait.createJumpingProblem(x0, conf))
 
 
 # Added the callback functions

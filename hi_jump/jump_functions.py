@@ -1,6 +1,6 @@
 import numpy as np
 import pinocchio
-import optim_params as conf
+#import optim_params as conf
 from crocoddyl import (ActivationModelWeightedQuad, ActivationModelInequality, ActuationModelFreeFloating, ActionModelImpact, CallbackDDPLogger,
                        CallbackDDPVerbose, CallbackSolverDisplay, ContactModel3D, ContactModelMultiple, CostModelCoM,
                        CostModelControl, CostModelFrameTranslation, CostModelForceLinearCone, CostModelState,
@@ -135,7 +135,7 @@ class TaskSE3:
 
 
 class SimpleQuadrupedalGaitProblem:
-    def __init__(self, rmodel, lfFoot, rfFoot, lhFoot, rhFoot):
+    def __init__(self, conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot):
         self.rmodel = rmodel
         self.rdata = rmodel.createData()
         self.state = StatePinocchio(self.rmodel)
@@ -160,7 +160,7 @@ class SimpleQuadrupedalGaitProblem:
         print "A\n", A
         self.A_friction_cones = A
 
-    def createJumpingProblem(self, x0, jumpHeight, jumpLength, timeStep, groundKnots, flyingKnots):
+    def createJumpingProblem(self, x0, conf):
         q0 = a2m(x0[:self.rmodel.nq])
         pinocchio.forwardKinematics(self.rmodel, self.rdata, q0)
         pinocchio.updateFramePlacements(self.rmodel, self.rdata)
@@ -168,7 +168,7 @@ class SimpleQuadrupedalGaitProblem:
         rhFootPos0 = self.rdata.oMf[self.rhFootId].translation
         lfFootPos0 = self.rdata.oMf[self.lfFootId].translation
         lhFootPos0 = self.rdata.oMf[self.lhFootId].translation
-        df = jumpLength[2] - rfFootPos0[2]
+        df = conf.jumpLength[2] - rfFootPos0[2]
         rfFootPos0[2] = 0.
         rhFootPos0[2] = 0.
         lfFootPos0[2] = 0.
@@ -180,23 +180,23 @@ class SimpleQuadrupedalGaitProblem:
         loco3dModel = []
         takeOff = [
             self.createSwingFootModel(
-                timeStep,
+                conf,
                 four_foot_support,
-            ) for k in range(groundKnots)
+            ) for k in range(conf.groundKnots)
         ]
         flyingUpPhase = [
-            self.createSwingFootModel(timeStep, [],
-                                      np.array([0.5*jumpLength[0], 0.5*jumpLength[1],  jumpHeight]) * (k + 1) / flyingKnots + comRef)
-            for k in range(flyingKnots)
+            self.createSwingFootModel(conf, [],
+                                      np.array([0.5*conf.jumpLength[0], 0.5*conf.jumpLength[1],  conf.jumpHeight]) * (k + 1) / conf.flyingKnots + comRef)
+            for k in range(conf.flyingKnots)
         ]
 #        flyingUpPhase += [self.createSwingFootModel(timeStep, [], 
 #                                                    np.array([0.5*jumpLength[0], 0.5*jumpLength[1],  jumpHeight]) + comRef)]
 
         flyingDownPhase = []
-        for k in range(flyingKnots):
-            flyingDownPhase += [self.createSwingFootModel(timeStep, [])]
+        for k in range(conf.flyingKnots):
+            flyingDownPhase += [self.createSwingFootModel(conf, [])]
 
-        f0 = np.matrix(jumpLength).T
+        f0 = np.matrix(conf.jumpLength).T
         footTask = [
             TaskSE3(pinocchio.SE3(np.eye(3), lfFootPos0 + f0), self.lfFootId),
             TaskSE3(pinocchio.SE3(np.eye(3), rfFootPos0 + f0), self.rfFootId),
@@ -204,12 +204,12 @@ class SimpleQuadrupedalGaitProblem:
             TaskSE3(pinocchio.SE3(np.eye(3), rhFootPos0 + f0), self.rhFootId)
         ]
         landingPhase = [
-            self.createImpactModel(four_foot_support, footTask)
+            self.createImpactModel(conf, four_foot_support, footTask)
         ]
         f0[2] = df
         landed = [
-            self.createSwingFootModel(timeStep, four_foot_support, comTask=comRef + m2a(f0))
-            for k in range(groundKnots)
+            self.createSwingFootModel(conf, four_foot_support, comTask=comRef + m2a(f0))
+            for k in range(conf.groundKnots)
         ]
         
         #terminal state        
@@ -254,11 +254,12 @@ class SimpleQuadrupedalGaitProblem:
                         datau.contact = contacts[contact_key[0]]
                 else:
                     assert(False)
+                    
         
         return problem
 
  
-    def createSwingFootModel(self, timeStep, supportFootIds, comTask=None):
+    def createSwingFootModel(self, conf, supportFootIds, comTask=None):
         """ Action model for a swing foot phase.
 
         :param timeStep: step duration of the action model
@@ -312,11 +313,11 @@ class SimpleQuadrupedalGaitProblem:
         # integration scheme
         dmodel = DifferentialActionModelFloatingInContact(self.rmodel, actModel, contactModel, costModel)
         model = IntegratedActionModelEuler(dmodel)
-        model.timeStep = timeStep
+        model.timeStep = conf.timeStep
         return model
 
 
-    def createImpactModel(self, supportFootIds, swingFootTask):
+    def createImpactModel(self, conf, supportFootIds, swingFootTask):
         """ Action model for impact models.
 
         An impact model consists of describing the impulse dynamics against a set of contacts.

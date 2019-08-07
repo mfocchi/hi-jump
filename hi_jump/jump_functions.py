@@ -6,7 +6,8 @@ from crocoddyl import (ActivationModelWeightedQuad, ActivationModelInequality, A
                        CostModelControl, CostModelFrameTranslation, CostModelForceLinearCone, CostModelState,
                        CostModelSum, DifferentialActionModelFloatingInContact, IntegratedActionModelEuler,
                        ImpulseModelMultiple, ImpulseModel3D, ShootingProblem, SolverDDP, SolverFDDP, StatePinocchio,
-                       a2m, displayTrajectory, loadHyQ, m2a, CostDataForceLinearCone, ActionDataImpact)
+                       a2m, displayTrajectory, loadHyQ, m2a, CostDataForceLinearCone, ActionDataImpact,
+                       CostModelNumDiff, CostDataNumDiff)
 
 
 def plotSolution(rmodel, xs, us):
@@ -226,13 +227,13 @@ class SimpleQuadrupedalGaitProblem:
         
         problem = ShootingProblem(x0, loco3dModel, loco3dModel[-1])
         
-        # QUICK FIX: Set contactData on CostDataForceLinearCone 
-        for m in problem.runningDatas + [problem.terminalData]:
+#        # QUICK FIX: Set contactData on CostDataForceLinearCone 
+        for d in problem.runningDatas + [problem.terminalData]:
             # skip the impact phase
-            if isinstance(m, ActionDataImpact): continue
+            if isinstance(d, ActionDataImpact): continue
                 
-            contacts = m.differential.contact.contacts
-            costs = m.differential.costs.costs
+            contacts = d.differential.contact.contacts
+            costs = d.differential.costs.costs
             
             # skip the flying phase
             if len(contacts)==0: continue
@@ -242,8 +243,17 @@ class SimpleQuadrupedalGaitProblem:
                 friction_key = [key for key in costs.keys() if str(foot_id) in key]
                 assert(len(contact_key)==1)
                 assert(len(friction_key)==1)
-                assert(isinstance(costs[friction_key[0]], CostDataForceLinearCone))
-                costs[friction_key[0]].contact = contacts[contact_key[0]]
+                cost_data = costs[friction_key[0]]
+                if isinstance(cost_data, CostDataForceLinearCone):
+                    cost_data.contact = contacts[contact_key[0]]
+                elif isinstance(cost_data, CostDataNumDiff):
+                    cost_data.data0.contact = contacts[contact_key[0]]
+                    for datax in cost_data.datax:
+                        datax.contact = contacts[contact_key[0]]
+                    for datau in cost_data.datau:
+                        datau.contact = contacts[contact_key[0]]
+                else:
+                    assert(False)
         
         return problem
 
@@ -273,6 +283,16 @@ class SimpleQuadrupedalGaitProblem:
             contactModel.addContact('contact_' + str(i), supportContactModel)
             
             costFriction = CostModelForceLinearCone(self.rmodel, supportContactModel, self.A_friction_cones, nu=actModel.nu)
+            
+#            state = StatePinocchio(self.rmodel)
+#            nq = self.rmodel.nq
+#            reevals=[lambda m, d, x, u: pinocchio.forwardKinematics(m, d, a2m(x[:nq]), a2m(x[nq:])), 
+#                     lambda m, d, x, u: pinocchio.computeJointJacobians(m, d, a2m(x[:nq])), 
+#                     lambda m, d, x, u: pinocchio.updateFramePlacements(m, d)]
+#            costFrictionFinDiff = CostModelNumDiff(costFriction, state, withGaussApprox=True,
+#                                                   reevals=reevals)
+            
+            #costModel.addCost("frictionCone_"+str(i), costFrictionFinDiff, conf.weight_friction)
             costModel.addCost("frictionCone_"+str(i), costFriction, conf.weight_friction)
         
         if isinstance(comTask, np.ndarray):

@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 import pinocchio as se3
-from pinocchio.robot_wrapper import RobotWrapper
 import crocoddyl
 from crocoddyl import a2m, m2a
 import hi_jump.jump_functions as quadruped
@@ -12,15 +11,7 @@ from tf.transformations import euler_from_quaternion
 import time
 import copy
 
-def loadHyQ(modelPath='/opt/openrobots/share/example-robot-data'):
-    URDF_FILENAME = "hyq_last.urdf"
-    URDF_SUBPATH = "/hyq_description/robots/" + URDF_FILENAME
-    robot = RobotWrapper.BuildFromURDF(modelPath + URDF_SUBPATH, [modelPath], se3.JointModelFreeFlyer())
-    # TODO define default position inside srdf
-    robot.q0.flat[7:] = [-0.2, 0.75, -1.5, -0.2, -0.75, 1.5, -0.2, 0.75, -1.5, -0.2, -0.75, 1.5]
-    robot.q0[2] = 0.57750958
-    robot.model.referenceConfigurations[conf.home_config] = robot.q0
-    return robot
+
     
 class CallbackJump:
     def __init__(self, level=0):
@@ -45,7 +36,7 @@ class CallbackJump:
             print "   %18s \t %10.2f"%(key, cost_total[key])
                    
 # Loading the HyQ model
-ROBOT =  loadHyQ()
+ROBOT =  utils.loadHyQ()
 
 if conf.ENABLE_DISPLAY:
     utils.setWhiteBackground(ROBOT)
@@ -70,7 +61,7 @@ callbacks = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), Call
 if conf.ENABLE_DISPLAY:
     callbacks += [crocoddyl.CallbackSolverDisplayParallel(ROBOT, -1, 1, conf.cameraTF)]
     
-print('Building the action models')
+print('WARMING UP')
 
 # Creating a jumping problem
 conf_warm_start = conf
@@ -94,7 +85,7 @@ ddp.solve(
     
 print "First optimization finished"
 conf.weight_com = 0.0
-conf_warm_start.weight_clearance = weight_clearance
+conf.weight_clearance = weight_clearance
 xs, us = ddp.xs, ddp.us
 ddp = crocoddyl.SolverFDDP(gait.createJumpingProblem(x0, conf))
 ddp.callback = callbacks

@@ -64,3 +64,6 @@ data_file = 'optim_traj.npz'
 
 #visualization
 cameraTF = [2., 2.68, 0.84, 0.2, 0.62, 0.72, 0.22]
+
+
+SAVE_FIGURES = False

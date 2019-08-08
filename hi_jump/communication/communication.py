@@ -48,6 +48,11 @@ np.set_printoptions(precision = 3, linewidth = 200, suppress = True)
 #prevent creating pyc files
 sys.dont_write_bytecode = True
 
+
+FIGURE_PATH = '../figs/'
+FILE_EXTENSIONS = ['png']; #'pdf']; #['png']; #,'eps'];
+FIGURES_DPI = 150;
+
 #dont trukate printing of matrices!
 np.set_printoptions(threshold=np.inf)
 
@@ -241,6 +246,7 @@ class ControlThread(threading.Thread):
             plt.ylabel(label+" "+str(i), fontsize=10)
             plt.grid()
             if i==0: plt.legend(loc="best")
+        self.saveFigure(label)
                 
     def plotGRF(self, f, f_des):
         plt.figure()
@@ -257,7 +263,8 @@ class ControlThread(threading.Thread):
             plt.ylabel("f "+str(i), fontsize=10)
             plt.grid()
             if i==0: plt.legend(loc="best")
-                
+        self.saveFigure('grf')
+        
     def plotCones(self, f, f_des):
         #this is a cross check for the friction cone constraints
         N_f = f.shape[0]
@@ -279,8 +286,13 @@ class ControlThread(threading.Thread):
             plt.plot(mu_f_des, label="desired mu", linestyle='--')
             plt.legend()
             plt.ylabel("mu", fontsize=10)
+        self.saveFigure('mu')   
 
-               
+    def saveFigure(self,title):
+        if(self.conf.SAVE_FIGURES):
+            for ext in FILE_EXTENSIONS:
+                plt.gcf().savefig(FIGURE_PATH+title.replace(' ', '_')+'.'+ext, format=ext, dpi=FIGURES_DPI, bbox_inches='tight');
+
     
 def talker(p):
 
@@ -393,6 +405,8 @@ def talker(p):
         plt.plot(x_base_array[:,i], label='x base '+str(i))
         plt.plot(x_base_des_array[:,i], '--', label='x base des '+str(i))
     plt.legend()
+    
+    p.saveFigure('x_base')
 #    
     plt.figure()
     for i in range(3):
@@ -400,6 +414,8 @@ def talker(p):
         plt.plot(v_base_des_array[:,i], '--', label='v base des '+str(i))
     plt.legend()
     plt.show()
+    
+    p.saveFigure('v_base')
     
 #    
 #    plt.figure()

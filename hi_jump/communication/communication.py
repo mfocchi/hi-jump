@@ -263,6 +263,16 @@ class ControlThread(threading.Thread):
             plt.ylabel("f "+str(i), fontsize=10)
             plt.grid()
             if i==0: plt.legend(loc="best")
+                    
+            flyingUpStart =self.conf.groundKnots
+            flyingDownStart = flyingUpStart + self.conf.flyingKnots
+            touchDownStart  =  flyingDownStart + self.conf.flyingKnots         
+            
+            plt.axvspan(0, self.conf.timeStep*self.conf.groundKnots, alpha=0.3, color='red') 
+            plt.axvspan(self.conf.timeStep*flyingUpStart, self.conf.timeStep*(flyingUpStart + self.conf.flyingKnots), alpha=0.2, color='green') 
+            plt.axvspan(self.conf.timeStep*flyingDownStart, self.conf.timeStep*(flyingDownStart + self.conf.flyingKnots),  alpha=0.2, color='blue') 
+            plt.axvspan(self.conf.timeStep*touchDownStart, self.conf.timeStep*(touchDownStart + self.conf.groundKnots),  alpha=0.2, color='gray') 
+
         self.saveFigure('grf')
         
     def plotCones(self, f, f_des):

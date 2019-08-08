@@ -10,6 +10,7 @@ import hi_jump.utils as utils
 import optim_params as conf
 from tf.transformations import euler_from_quaternion
 import time
+import copy
 
 def loadHyQ(modelPath='/opt/openrobots/share/example-robot-data'):
     URDF_FILENAME = "hyq_last.urdf"
@@ -65,27 +66,25 @@ rhFoot = 'rh_foot'
 
 #TODO NOT CLEAR
 gait = quadruped.SimpleQuadrupedalGaitProblem(conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot)
-
-print('Building the action models')
-
-
-# Creating a jumping problem
-ddp = crocoddyl.SolverFDDP(gait.createJumpingProblem(x0, conf))
-
-
-# Added the callback functions
-print('*** SOLVE  jumpin ***')
-
 callbacks = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), CallbackJump()]
 if conf.ENABLE_DISPLAY:
     callbacks += [crocoddyl.CallbackSolverDisplayParallel(ROBOT, -1, 1, conf.cameraTF)]
+    
+print('Building the action models')
 
+# Creating a jumping problem
+conf_warm_start = conf
+weight_clearance = conf_warm_start.weight_clearance
+conf_warm_start.weight_clearance = 0.0
+ddp = crocoddyl.SolverFDDP(gait.createJumpingProblem(x0, conf_warm_start))
+# Added the callback functions
+print('*** SOLVE  jumpin ***')
 # Solving the problem with the DDP solver
-ddp.th_stop = conf.th_stop
+ddp.th_stop = conf_warm_start.th_stop
 ddp.callback = callbacks
 ddp.solve(
     maxiter=3,
-    regInit=conf.reginit,
+    regInit=conf_warm_start.reginit,
     init_xs=[rmodel.defaultState] * len(ddp.models()),
     init_us=[
         m.differential.quasiStatic(d.differential, rmodel.defaultState) if isinstance(
@@ -95,6 +94,7 @@ ddp.solve(
     
 print "First optimization finished"
 conf.weight_com = 0.0
+conf_warm_start.weight_clearance = weight_clearance
 xs, us = ddp.xs, ddp.us
 ddp = crocoddyl.SolverFDDP(gait.createJumpingProblem(x0, conf))
 ddp.callback = callbacks
@@ -108,7 +108,7 @@ x0 = ddp.xs[-1]
 # Display the entire motion
 if conf.ENABLE_DISPLAY:
     time.sleep(2.0)
-    ts = [m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
+    ts = [10*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
     utils.displayPhaseMotion(ROBOT, ddp.xs, ts)
 
 # Plotting the entire motion

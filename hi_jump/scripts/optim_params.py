@@ -27,7 +27,7 @@ flyingKnots = 20
 
 mu = 0.5
 contact_normal = np.array([0.0, 0.0, 1.0])
-
+clearance = 0.15
 
 #weights
 weight_array_com = np.array([1., 0., 1.0])
@@ -38,7 +38,7 @@ weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.1] *
 weight_postural = 1e-02
 weight_control = 1e-04
 weight_friction = 1e-1
-        
+weight_clearance = 1e2
 
 weight_foot_pos_impact_xy = 1e4
 weight_foot_pos_impact_z = 1e07

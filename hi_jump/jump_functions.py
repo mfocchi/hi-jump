@@ -184,17 +184,70 @@ class SimpleQuadrupedalGaitProblem:
                 four_foot_support,
             ) for k in range(conf.groundKnots)
         ]
-        flyingUpPhase = [
-            self.createSwingFootModel(conf, [],
-                                      np.array([0.5*conf.jumpLength[0], 0.5*conf.jumpLength[1],  conf.jumpHeight]) * (k + 1) / conf.flyingKnots + comRef)
-            for k in range(conf.flyingKnots)
-        ]
+     
+        #create foot task for obstacle avoidance 
+        
+        footPosRelativeZ = np.zeros(2*conf.flyingKnots)           
+        for i in range(2*conf.flyingKnots):
+            if (i < conf.flyingKnots/4):                
+                footPosRelativeZ[i] =  conf.clearance * i / (conf.flyingKnots/4)
+            elif (i >= conf.flyingKnots/4) and (i < conf.flyingKnots*3/2):
+                footPosRelativeZ[i] = conf.clearance 
+            elif (i >= conf.flyingKnots*3/2) and (i < conf.flyingKnots*2):
+                footPosRelativeZ[i] = conf.clearance - conf.clearance*(i- conf.flyingKnots*3/2)/(conf.flyingKnots/2) 
+            else:
+                print "out of bounds"
+                
+
+        flyingUpPhase = []      
+        for k in range(conf.flyingKnots):
+                
+            #add the tasks in the list
+            #add the tasks in the list
+            clearanceDic_lf = dict()     
+            clearanceDic_lf['id'] = self.lfFootId
+            clearanceDic_lf['pos'] = m2a(lfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[ k] ])
+        
+            clearanceDic_rf = dict()     
+            clearanceDic_rf['id'] = self.rfFootId
+            clearanceDic_rf['pos'] = m2a(rfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[ k] ])
+            
+            clearanceDic_lh = dict()     
+            clearanceDic_lh['id'] = self.lhFootId
+            clearanceDic_lh['pos'] = m2a(lhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[ k] ])
+
+            clearanceDic_rh = dict()     
+            clearanceDic_rh['id'] = self.rhFootId
+            clearanceDic_rh['pos'] = m2a(rhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[ k] ])                    
+            clearanceTask = [clearanceDic_lf, clearanceDic_rf, clearanceDic_lh, clearanceDic_rh]
+
+            flyingUpPhase += [self.createSwingFootModel(conf, [],
+                                      np.array([0.5*conf.jumpLength[0], 0.5*conf.jumpLength[1],  conf.jumpHeight]) * (k + 1) / conf.flyingKnots + comRef, clearanceTask = clearanceTask)]
 #        flyingUpPhase += [self.createSwingFootModel(timeStep, [], 
 #                                                    np.array([0.5*jumpLength[0], 0.5*jumpLength[1],  jumpHeight]) + comRef)]
-
         flyingDownPhase = []
         for k in range(conf.flyingKnots):
-            flyingDownPhase += [self.createSwingFootModel(conf, [])]
+            #add the tasks in the list
+            clearanceDic_lf = dict()     
+            clearanceDic_lf['id'] = self.lfFootId
+            clearanceDic_lf['pos'] = m2a(lfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[conf.flyingKnots +  k] ])
+        
+            clearanceDic_rf = dict()     
+            clearanceDic_rf['id'] = self.rfFootId
+            clearanceDic_rf['pos'] = m2a(rfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[conf.flyingKnots + k] ])
+            
+            clearanceDic_lh = dict()     
+            clearanceDic_lh['id'] = self.lhFootId
+            clearanceDic_lh['pos'] = m2a(lhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[conf.flyingKnots + k] ])
+
+            clearanceDic_rh = dict()     
+            clearanceDic_rh['id'] = self.rhFootId
+            clearanceDic_rh['pos'] = m2a(rhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[conf.flyingKnots + k] ])                    
+            clearanceTask = [clearanceDic_lf, clearanceDic_rf, clearanceDic_lh, clearanceDic_rh]
+                             
+            flyingDownPhase += [self.createSwingFootModel(conf, [], clearanceTask = clearanceTask)]
+
+
 
         f0 = np.matrix(conf.jumpLength).T
         footTask = [
@@ -259,7 +312,7 @@ class SimpleQuadrupedalGaitProblem:
         return problem
 
  
-    def createSwingFootModel(self, conf, supportFootIds, comTask=None):
+    def createSwingFootModel(self, conf, supportFootIds, comTask=None, clearanceTask=None):
         """ Action model for a swing foot phase.
 
         :param timeStep: step duration of the action model
@@ -284,7 +337,7 @@ class SimpleQuadrupedalGaitProblem:
             contactModel.addContact('contact_' + str(i), supportContactModel)
             
             costFriction = CostModelForceLinearCone(self.rmodel, supportContactModel, self.A_friction_cones, nu=actModel.nu)
-            
+            #numeric friction 
 #            state = StatePinocchio(self.rmodel)
 #            nq = self.rmodel.nq
 #            reevals=[lambda m, d, x, u: pinocchio.forwardKinematics(m, d, a2m(x[:nq]), a2m(x[nq:])), 
@@ -292,15 +345,30 @@ class SimpleQuadrupedalGaitProblem:
 #                     lambda m, d, x, u: pinocchio.updateFramePlacements(m, d)]
 #            costFrictionFinDiff = CostModelNumDiff(costFriction, state, withGaussApprox=True,
 #                                                   reevals=reevals)
-            
             #costModel.addCost("frictionCone_"+str(i), costFrictionFinDiff, conf.weight_friction)
             costModel.addCost("frictionCone_"+str(i), costFriction, conf.weight_friction)
         
         if isinstance(comTask, np.ndarray):
             comTrack = CostModelCoM(self.rmodel, comTask, actModel.nu, ActivationModelWeightedQuad(conf.weight_array_com**2))
             costModel.addCost("comTrack", comTrack, conf.weight_com)
-
-
+        #clearance task
+        if clearanceTask is not None and conf.weight_clearance > 0:
+            for foot in clearanceTask:
+                #set clearance only on z component
+                activation = ActivationModelInequality(np.array([-1e08, -1e08, 0.0 ]), 
+                                                             np.array([1e08, 1e08, 1e08]))    
+                clearanceTrack = \
+                        CostModelFrameTranslation(self.rmodel,
+                                                  foot['id'],
+                                                  foot['pos'],
+                                                  nu=0,
+                                                  activation = activation)           
+                costModel.addCost("clearanceTrack_" + str(foot['id']), clearanceTrack, conf.weight_clearance)
+                
+                
+       
+                
+            
         stateReg = CostModelState(self.rmodel, self.state, self.rmodel.defaultState, actModel.nu,
                                   ActivationModelWeightedQuad(conf.weight_array_postural**2))
                          

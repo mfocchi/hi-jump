@@ -120,7 +120,7 @@ class ControlThread(threading.Thread):
     def loadConfig(self):
         return
 
-    def setPDs(self, kp, kd):
+    def setPDs(self, kp, kd, ki):
         
         #create the message
         req_msg = set_pidsRequest()
@@ -132,7 +132,7 @@ class ControlThread(threading.Thread):
             joint_pid.joint_name = self.joint_names[i]
             joint_pid.p_value = kp 
             joint_pid.d_value = kd
-            joint_pid.i_value = 0.0
+            joint_pid.i_value = ki
             req_msg.data += [joint_pid]
             
         #send request and get response (in this case none)
@@ -291,7 +291,7 @@ def talker(p):
     kin = HyQKinematics()
     math = Math()
 
-    p.setPDs(500.0,26.0)
+
 
     #load configs
     p.loadConfig()
@@ -311,8 +311,8 @@ def talker(p):
 
     # GOZERO Keep the fixed configuration for the joints at the start of simulation 
     p.q_des = p.u.mapFromRos(q_des_array[0,:])
-
     
+#    p.setPDs(400.0, 26.0, 0.0)
     p.qd_des = np.zeros(12)
     p.tau_ffwd = np.zeros(12)
     gravity_comp = p.u.mapFromRos(data['tau_gravity'])

@@ -351,7 +351,7 @@ def talker(p):
     # GOZERO Keep the fixed configuration for the joints at the start of simulation 
     p.q_des = p.u.mapFromRos(q_des_array[0,:])
     
-    p.setPDs(500.0, 16.0, 0.0)
+    p.setPDs(100.0, 16.0, 0.0)
     p.qd_des = np.zeros(12)
     p.tau_ffwd = np.zeros(12)
     gravity_comp = p.u.mapFromRos(data['tau_gravity'])
@@ -440,6 +440,8 @@ def talker(p):
         if(time_spent[i] < p.conf.dt): time.sleep(0.9*(p.conf.dt-time_spent[i]))
         
     p.stop_log()
+    
+    p.setPDs(400.0, 26.0, 0.0)
     
     print 'de registering...'
     p.deregister_node()    

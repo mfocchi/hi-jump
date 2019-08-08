@@ -42,6 +42,9 @@ from jet_leg.math_tools import Math
 from ros_impedance_controller.srv import set_pids
 from ros_impedance_controller.srv import set_pidsRequest
 from ros_impedance_controller.msg import pid
+
+import hi_jump.utils as  hijump_utils
+
 #important
 np.set_printoptions(precision = 3, linewidth = 200, suppress = True)
 
@@ -70,6 +73,7 @@ class ControlThread(threading.Thread):
         self.conf = conf
         self.grForcesW = np.zeros(12)
         self.basePoseW = np.zeros(6)
+        self.quaternion = np.zeros(4)
         self.baseTwistW = np.zeros(6)
         self.q = np.zeros(12)
         self.qd = np.zeros(12)
@@ -168,16 +172,18 @@ class ControlThread(threading.Thread):
             
     def _receive_pose(self, msg):
         # These are base pose and twist that is different than COM due to offset
-        quaternion = (
+        self.quaternion = (
             msg.pose.pose.orientation.x,
             msg.pose.pose.orientation.y,
             msg.pose.pose.orientation.z,
             msg.pose.pose.orientation.w)
-        euler = euler_from_quaternion(quaternion, axes='szyx')
+        euler = euler_from_quaternion(self.quaternion, axes='szyx')
+        
 
         self.basePoseW[0] = msg.pose.pose.position.x
         self.basePoseW[1] = msg.pose.pose.position.y
         self.basePoseW[2] = msg.pose.pose.position.z
+
         self.basePoseW[3] = euler[0]
         self.basePoseW[4] = euler[1]
         self.basePoseW[5] = euler[2]
@@ -303,6 +309,7 @@ class ControlThread(threading.Thread):
             for ext in FILE_EXTENSIONS:
                 plt.gcf().savefig(FIGURE_PATH+title.replace(' ', '_')+'.'+ext, format=ext, dpi=FIGURES_DPI, bbox_inches='tight');
 
+
     
 def talker(p):
 
@@ -334,7 +341,7 @@ def talker(p):
     # GOZERO Keep the fixed configuration for the joints at the start of simulation 
     p.q_des = p.u.mapFromRos(q_des_array[0,:])
     
-#    p.setPDs(400.0, 26.0, 0.0)
+    p.setPDs(500.0, 16.0, 0.0)
     p.qd_des = np.zeros(12)
     p.tau_ffwd = np.zeros(12)
     gravity_comp = p.u.mapFromRos(data['tau_gravity'])
@@ -342,8 +349,8 @@ def talker(p):
     
     start_t = time.time()
     print("reset posture...")
-    print p.q_des
-    while time.time()-start_t < 2.5: 
+
+    while time.time()-start_t < 1.5: 
         p.send_des_jstate(p.q_des, p.qd_des, p.tau_ffwd)
         time.sleep(p.conf.dt)
     print "q err prima freeze base", (p.q-p.q_des)
@@ -354,7 +361,7 @@ def talker(p):
     print "q err pre grav comp", (p.q-p.q_des)
     print("compensating gravity...")
     start_t = time.time()
-    while time.time()-start_t < 3.5: 
+    while time.time()-start_t < 2.5: 
         p.send_des_jstate(p.q_des, p.qd_des, gravity_comp)    
         time.sleep(p.conf.dt)
     print "q err post grav comp", (p.q-p.q_des)
@@ -384,11 +391,12 @@ def talker(p):
     N = q_des_array.shape[0] 
     joint_counter_array = np.zeros(N)
     q_array = np.zeros_like(q_des_array)
+    q_ros_array = np.zeros_like(q_des_array)
     qd_array = np.zeros_like(q_des_array)
     tau_array = np.zeros_like(q_des_array)
     f_array = np.zeros((N,12))
     f_counter_array = np.zeros(N)
-    x_base_array = np.zeros((N,6))
+    x_base_array = np.zeros((N,7))
     v_base_array = np.zeros((N,6))
     euler_array = np.zeros((N,3))
     
@@ -407,12 +415,14 @@ def talker(p):
         p.send_des_jstate(q_des_array[i,:], qd_des_array[i,:], tau_des_array[i,:]) 
         
         q_array[i,:] = p.q
+        q_ros_array[i,:] = p.u.mapFromRos(p.q)
         qd_array[i,:] = p.qd
         tau_array[i,:] = p.tau
         f_array[i,:] = p.grForcesW
         f_counter_array[i] = p.contact_counter
         joint_counter_array[i] = p.joint_counter
-        x_base_array[i,:] = p.basePoseW
+        x_base_array[i,:] = np.concatenate((p.basePoseW[:3], p.quaternion))
+        
         v_base_array[i,:] = p.baseTwistW
         euler_array[i,:] = p.basePoseW[3:6]
         
@@ -421,33 +431,33 @@ def talker(p):
         
     p.stop_log()
     
-    p.plotJoints(q_array, q_des_array, label="q")
-    p.plotJoints(qd_array, qd_des_array, label="qd")
-    p.plotJoints(tau_array, tau_des_array, label="tau")
-    p.plotGRF(np.array(p.f_log), f_des_array)
-    p.plotCones(np.array(p.f_log), f_des_array)
-    
-    
     print 'de registering...'
-    p.deregister_node()
+    p.deregister_node()    
     
-    plt.figure()
-    for i in range(3):
-        plt.plot(x_base_array[:,i], label='x base '+str(i))
-        plt.plot(x_base_des_array[:,i], '--', label='x base des '+str(i))
-    plt.legend()
-    
-    p.saveFigure('x_base')
+#    p.plotJoints(q_array, q_des_array, label="q")
+#    p.plotJoints(qd_array, qd_des_array, label="qd")
+#    p.plotJoints(tau_array, tau_des_array, label="tau")
+    p.plotGRF(np.array(p.f_log), f_des_array)
+#    p.plotCones(np.array(p.f_log), f_des_array)
 #    
-    plt.figure()
-    for i in range(3):
-        plt.plot(v_base_array[:,i], label='v base '+str(i))
-        plt.plot(v_base_des_array[:,i], '--', label='v base des '+str(i))
-    plt.legend()
-    plt.show()
-    
-    p.saveFigure('v_base')
-    
+#    plt.figure()
+#    for i in range(3):
+#        plt.plot(x_base_array[:,i], label='x base '+str(i))
+#        plt.plot(x_base_des_array[:,i], '--', label='x base des '+str(i))
+#    plt.legend()  
+#    p.saveFigure('x_base')
+#    plt.figure()
+#    for i in range(3):
+#        plt.plot(v_base_array[:,i], label='v base '+str(i))
+#        plt.plot(v_base_des_array[:,i], '--', label='v base des '+str(i))
+#    plt.legend()
+#    plt.show()  
+#    p.saveFigure('v_base')
+
+#    ROBOT =  hijump_utils.loadHyQ()
+#    hijump_utils.setWhiteBackground(ROBOT)
+#    ts = np.ones(x_base_array.shape[0])*p.conf.dt
+#    hijump_utils.displayPhaseMotion(ROBOT, np.hstack((x_base_array, q_ros_array)), 10*ts)
 #    
 #    plt.figure()
 #    for i in range(3):

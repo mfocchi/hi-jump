@@ -365,10 +365,19 @@ class SimpleQuadrupedalGaitProblem:
                                                   activation = activation)           
                 costModel.addCost("clearanceTrack_" + str(foot['id']), clearanceTrack, conf.weight_clearance)
                 
-                
-       
-                
-            
+        
+        if conf.weight_joint_limits>0.0:                
+            qMin = np.concatenate((-1e10*np.ones(6), m2a(self.rmodel.lowerPositionLimit)[7:]))
+            qMax = np.concatenate((+1e10*np.ones(6), m2a(self.rmodel.upperPositionLimit)[7:]))
+#            qMax[8] = -0.5
+#            qMax[14] = -0.5
+            vMin = np.array(conf.nv*[-1e10])
+            vMax = np.array(conf.nv*[+1e10])
+            activation =  ActivationModelInequality(np.concatenate((qMin, vMin)), np.concatenate((qMax, vMax)))
+            jointLimits = CostModelState(self.rmodel, self.state, np.zeros(self.state.nx), actModel.nu,
+                                         activation=activation)
+            costModel.addCost("jointLim", jointLimits, conf.weight_joint_limits)
+        
         stateReg = CostModelState(self.rmodel, self.state, self.rmodel.defaultState, actModel.nu,
                                   ActivationModelWeightedQuad(conf.weight_array_postural**2))
                          

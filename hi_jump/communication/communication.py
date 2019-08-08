@@ -252,16 +252,25 @@ class ControlThread(threading.Thread):
             plt.ylabel(label+" "+str(i), fontsize=10)
             plt.grid()
             if i==0: plt.legend(loc="best")
+            scale =  self.conf.timeStep / self.conf.dt
+            flyingUpStart =self.conf.groundKnots
+            flyingDownStart = flyingUpStart + self.conf.flyingKnots
+            touchDownStart  =  flyingDownStart + self.conf.flyingKnots  
+            
+            plt.axvspan(0, scale*self.conf.groundKnots, alpha=0.3, color='red') 
+            plt.axvspan(scale*flyingUpStart, scale*(flyingUpStart + self.conf.flyingKnots), alpha=0.2, color='green') 
+            plt.axvspan(scale*flyingDownStart, scale*(flyingDownStart + self.conf.flyingKnots),  alpha=0.2, color='blue') 
+            plt.axvspan(scale*touchDownStart, scale*(touchDownStart + self.conf.groundKnots),  alpha=0.2, color='gray') 
+
         self.saveFigure(label)
                 
     def plotGRF(self, f, f_des):
         plt.figure()
-        plt.title("Forces")
-        dt = 0.001
+        plt.title("Forces")        
         N_f = f.shape[0]
         N_f_des = f_des.shape[0]
-        time_f = np.arange(0.0, N_f_des*dt, dt*N_f_des/N_f)
-        time_f_des = np.arange(0.0, N_f_des*dt, dt)        
+        time_f = np.arange(0.0, N_f_des*self.conf.dt, self.conf.dt*N_f_des/N_f)
+        time_f_des = np.arange(0.0, N_f_des*self.conf.dt, self.conf.dt)        
         for i in range(12) :
             plt.subplot(4, 3, i+1)
             plt.plot(time_f, f[:,i], label="Actual")
@@ -287,7 +296,8 @@ class ControlThread(threading.Thread):
         N_f_des = f_des.shape[0]
         mu_f = np.zeros(N_f)
         mu_f_des = np.zeros(N_f_des)
-        
+        time_f = np.arange(0.0, N_f_des*self.conf.dt, self.conf.dt*N_f_des/N_f)
+        time_f_des = np.arange(0.0, N_f_des*self.conf.dt, self.conf.dt)        
   
         plt.figure()        
         for j in range(4):
@@ -298,8 +308,8 @@ class ControlThread(threading.Thread):
                 if f[i,3*j+2] != 0:  mu_f[i] = np.linalg.norm(f[i,3*j:3*j+2])/f[i,3*j+2]
             
 
-            plt.plot(mu_f, label="actual mu")
-            plt.plot(mu_f_des, label="desired mu", linestyle='--')
+            plt.plot(time_f, mu_f, label="actual mu")
+            plt.plot(time_f_des, mu_f_des, label="desired mu", linestyle='--')
             plt.legend()
             plt.ylabel("mu", fontsize=10)
         self.saveFigure('mu')   

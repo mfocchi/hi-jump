@@ -332,17 +332,38 @@ def talker(p):
     
     start_t = time.time()
     print("reset posture...")
-    p.send_des_jstate(p.q_des, p.qd_des, p.tau_ffwd)
-    time.sleep(1.5)
+    print p.q_des
+    while time.time()-start_t < 2.5: 
+        p.send_des_jstate(p.q_des, p.qd_des, p.tau_ffwd)
+        time.sleep(p.conf.dt)
+    print "q err prima freeze base", (p.q-p.q_des)
     resp = p.freeze_base()    
-    time.sleep(1.0)
+    time.sleep(2.0)
 
-    start_t = time.time()
+
+    print "q err pre grav comp", (p.q-p.q_des)
     print("compensating gravity...")
-    #p.tau_ffwd = gravity_comp.deepcopy()
-    while ((time.time() - start_t) < 2.0):
-        p.send_des_jstate(p.q_des, p.qd_des, gravity_comp)
+    start_t = time.time()
+    while time.time()-start_t < 3.5: 
+        p.send_des_jstate(p.q_des, p.qd_des, gravity_comp)    
+        time.sleep(p.conf.dt)
+    print "q err post grav comp", (p.q-p.q_des)
+    
+    
+#    tau_int = np.zeros_like(p.tau)
+#    count = 0
+#    while True:
+#        time.sleep(0.001)
+#        tau_int += (p.q_des - p.q)*0.001*100
+#        p.send_des_jstate(p.q_des, p.qd_des,  gravity_comp + tau_int)
+#        count +=1        
+#        if np.max(np.abs(p.q-p.q_des))<0.01: 
+#            break
+#        else:
+#            if ((count % 300) == 0): print "Wait for integral to converge", np.max(np.abs(p.q-p.q_des))
+#    
 
+    
     #init the kinematics (homogeneous and jacobians for feet position I guess)
     p.initKinematics(kin)
     #update the kinematics

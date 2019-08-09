@@ -20,10 +20,14 @@ nv = 18
 jumpHeight =  0.15
 
 step = dict()
+clearance_height = dict()
 #test_name = 'FLAT'
-test_name = 'PALLET'
+test_name = 'FLAT'
 step['FLAT']  = [0.3, 0.0, 0.0]
-step['PALLET'] = [0.95, 0.0, 0.14]
+step['PALLET'] = [1.0, 0.0, 0.16]
+clearance_height['FLAT']  = 0.1
+clearance_height['PALLET'] = 0.2
+
 
 params =[]
 
@@ -39,7 +43,7 @@ landingKnots = 45
 
 mu = 0.5
 contact_normal = np.array([0.0, 0.0, 1.0])
-clearance = 0.2
+clearance = clearance_height[test_name]
 
 #weights
 weight_array_com = np.array([1., 0., 1.0])

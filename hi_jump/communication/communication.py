@@ -253,11 +253,13 @@ class ControlThread(threading.Thread):
             plt.grid()
             if i==0: plt.legend(loc="best")
             scale =  self.conf.timeStep / self.conf.dt
-            flyingUpStart =self.conf.takeOffKnots
+            rearingStart = self.conf.takeOffKnots           
+            flyingUpStart = rearingStart + self.conf.rearingKnots            
             flyingDownStart = flyingUpStart + self.conf.flyingKnots
             touchDownStart  =  flyingDownStart + self.conf.flyingKnots  
             
             plt.axvspan(0, scale*self.conf.takeOffKnots, alpha=0.3, color='red') 
+            plt.axvspan(scale*rearingStart, scale*self.conf.rearingKnots, alpha=0.3, color='gray') 
             plt.axvspan(scale*flyingUpStart, scale*(flyingUpStart + self.conf.flyingKnots), alpha=0.2, color='green') 
             plt.axvspan(scale*flyingDownStart, scale*(flyingDownStart + self.conf.flyingKnots),  alpha=0.2, color='blue') 
             plt.axvspan(scale*touchDownStart, scale*(touchDownStart + self.conf.landingKnots),  alpha=0.2, color='gray') 
@@ -279,11 +281,14 @@ class ControlThread(threading.Thread):
             plt.grid()
             if i==0: plt.legend(loc="best")
                     
+            rearingStart = self.conf.takeOffKnots           
+            flyingUpStart = rearingStart + self.conf.rearingKnots  
             flyingUpStart =self.conf.takeOffKnots
             flyingDownStart = flyingUpStart + self.conf.flyingKnots
             touchDownStart  =  flyingDownStart + self.conf.flyingKnots         
             
             plt.axvspan(0, self.conf.timeStep*self.conf.takeOffKnots, alpha=0.3, color='red') 
+            plt.axvspan(self.conf.timeStep*rearingStart, self.conf.timeStep*self.conf.rearingKnots, alpha=0.3, color='gray') 
             plt.axvspan(self.conf.timeStep*flyingUpStart, self.conf.timeStep*(flyingUpStart + self.conf.flyingKnots), alpha=0.2, color='green') 
             plt.axvspan(self.conf.timeStep*flyingDownStart, self.conf.timeStep*(flyingDownStart + self.conf.flyingKnots),  alpha=0.2, color='blue') 
             plt.axvspan(self.conf.timeStep*touchDownStart, self.conf.timeStep*(touchDownStart + self.conf.landingKnots),  alpha=0.2, color='gray') 

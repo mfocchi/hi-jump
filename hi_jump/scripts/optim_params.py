@@ -33,6 +33,7 @@ jumpLength = step[test_name]
 
 timeStep = 1.0e-2
 takeOffKnots = 45
+rearingKnots = 0
 flyingKnots = 20
 landingKnots = 45
 
@@ -47,7 +48,7 @@ weight_com = 1e4
 
 weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.1] * nv)
 weight_postural = 1e-02
-weight_joint_limits = 0e1
+weight_joint_limits = 1e1
 weight_control = 1e-04
 weight_friction = 1e-1
 weight_clearance = 1e2
@@ -61,10 +62,10 @@ kp_contact = 0.
 kd_contact = 1.0/timeStep
 
 #obstacle avoidance time parmaterized trapezoidal function
-retractDuration = 10
+retractDuration = 5
 extendDuration = 1
 retractIndex = retractDuration
-extendIndex = (flyingKnots*2) - extendDuration
+extendIndex = (flyingKnots*2+rearingKnots) - extendDuration
 
 
 #terminal state

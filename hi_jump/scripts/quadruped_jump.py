@@ -124,8 +124,8 @@ x_base  = xs[:,:7]
 v_base  = xs[:,rmodel.nq:rmodel.nq+6]
 f = [ddp.problem.runningDatas[i].differential.f for i in i_no_impact]
 for i in range(len(f)):
-    if len(f[i])==0:
-        f[i] = np.zeros(12)
+    if len(f[i])!=12:
+        f[i] = np.concatenate((f[i], np.zeros(12-len(f[i]))))
 f = np.array(f)
 # alternative way
 #f = [m.differential.f for m in ddp.problem.runningDatas if 'differential' in m.__dict__.keys()]

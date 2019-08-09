@@ -178,75 +178,67 @@ class SimpleQuadrupedalGaitProblem:
 
         four_foot_support = [self.lfFootId, self.lhFootId, self.rfFootId, self.rhFootId]
         loco3dModel = []
+        
+        
+        #TAKE OFF PHASE        
         takeOff = [
             self.createSwingFootModel(
                 conf,
                 four_foot_support,
-            ) for k in range(conf.groundKnots)
+            ) for k in range(conf.takeOffKnots)
         ]
-     
-        #create foot task for obstacle avoidance 
-        
-        footPosRelativeZ = np.zeros(2*conf.flyingKnots)           
-        for i in range(2*conf.flyingKnots):
+
+
+        #create foot task for obstacle avoidance       
+        footPosRelativeZ = np.zeros(2*conf.flyingKnots+conf.rearingKnots)    
+        clearanceTasks = []
+        for i in range(len(footPosRelativeZ)):
             if (i < conf.retractIndex):                
                 footPosRelativeZ[i] =  conf.clearance * i / (conf.retractDuration)
             elif (i >= conf.retractIndex) and (i < conf.extendIndex):
                 footPosRelativeZ[i] = conf.clearance 
-            elif (i >= conf.extendIndex) and (i < conf.flyingKnots*2):
+            elif (i >= conf.extendIndex) and (i < len(footPosRelativeZ)):
                 footPosRelativeZ[i] = conf.clearance - conf.clearance*(i - conf.extendIndex)/(conf.extendDuration) 
             else:
                 print "out of bounds"
+            
+            #add the tasks in the list
+            clearanceDic_lf = dict()     
+            clearanceDic_lf['id'] = self.lfFootId
+            clearanceDic_lf['pos'] = m2a(lfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[i] ])
+        
+            clearanceDic_rf = dict()     
+            clearanceDic_rf['id'] = self.rfFootId
+            clearanceDic_rf['pos'] = m2a(rfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[i] ])
+            
+            clearanceDic_lh = dict()     
+            clearanceDic_lh['id'] = self.lhFootId
+            clearanceDic_lh['pos'] = m2a(lhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[i] ])
+
+            clearanceDic_rh = dict()     
+            clearanceDic_rh['id'] = self.rhFootId
+            clearanceDic_rh['pos'] = m2a(rhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[i] ]) 
+            
+            if i<conf.rearingKnots:
+                clearanceTasks += [[clearanceDic_lf, clearanceDic_rf]]
+            else:
+                clearanceTasks += [[clearanceDic_lf, clearanceDic_rf, clearanceDic_lh, clearanceDic_rh]]
                 
+        #REARING PHASE 
+        two_foot_support = [ self.lhFootId,  self.rhFootId]
+        rearing = []
+        for k in range(conf.rearingKnots):
+            rearing += [self.createSwingFootModel(conf, two_foot_support, clearanceTask = clearanceTasks[k])]
 
         flyingUpPhase = []      
         for k in range(conf.flyingKnots):
-                
-            #add the tasks in the list
-            #add the tasks in the list
-            clearanceDic_lf = dict()     
-            clearanceDic_lf['id'] = self.lfFootId
-            clearanceDic_lf['pos'] = m2a(lfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[ k] ])
-        
-            clearanceDic_rf = dict()     
-            clearanceDic_rf['id'] = self.rfFootId
-            clearanceDic_rf['pos'] = m2a(rfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[ k] ])
-            
-            clearanceDic_lh = dict()     
-            clearanceDic_lh['id'] = self.lhFootId
-            clearanceDic_lh['pos'] = m2a(lhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[ k] ])
-
-            clearanceDic_rh = dict()     
-            clearanceDic_rh['id'] = self.rhFootId
-            clearanceDic_rh['pos'] = m2a(rhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[ k] ])                    
-            clearanceTask = [clearanceDic_lf, clearanceDic_rf, clearanceDic_lh, clearanceDic_rh]
-
             flyingUpPhase += [self.createSwingFootModel(conf, [],
-                                      np.array([0.5*conf.jumpLength[0], 0.5*conf.jumpLength[1],  conf.jumpHeight]) * (k + 1) / conf.flyingKnots + comRef, clearanceTask = clearanceTask)]
-#        flyingUpPhase += [self.createSwingFootModel(timeStep, [], 
-#                                                    np.array([0.5*jumpLength[0], 0.5*jumpLength[1],  jumpHeight]) + comRef)]
+                                      np.array([0.5*conf.jumpLength[0], 0.5*conf.jumpLength[1],  conf.jumpHeight]) * (k + 1) / conf.flyingKnots + comRef, 
+                                      clearanceTask = clearanceTasks[conf.rearingKnots+k])]
+
         flyingDownPhase = []
-        for k in range(conf.flyingKnots):
-            #add the tasks in the list
-            clearanceDic_lf = dict()     
-            clearanceDic_lf['id'] = self.lfFootId
-            clearanceDic_lf['pos'] = m2a(lfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[conf.flyingKnots +  k] ])
-        
-            clearanceDic_rf = dict()     
-            clearanceDic_rf['id'] = self.rfFootId
-            clearanceDic_rf['pos'] = m2a(rfFootPos0) + np.array([0.0,0.0, footPosRelativeZ[conf.flyingKnots + k] ])
-            
-            clearanceDic_lh = dict()     
-            clearanceDic_lh['id'] = self.lhFootId
-            clearanceDic_lh['pos'] = m2a(lhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[conf.flyingKnots + k] ])
-
-            clearanceDic_rh = dict()     
-            clearanceDic_rh['id'] = self.rhFootId
-            clearanceDic_rh['pos'] = m2a(rhFootPos0) + np.array([0.0,0.0, footPosRelativeZ[conf.flyingKnots + k] ])                    
-            clearanceTask = [clearanceDic_lf, clearanceDic_rf, clearanceDic_lh, clearanceDic_rh]
-                             
-            flyingDownPhase += [self.createSwingFootModel(conf, [], clearanceTask = clearanceTask)]
-
+        for k in range(conf.flyingKnots):                             
+            flyingDownPhase += [self.createSwingFootModel(conf, [], clearanceTask = clearanceTasks[conf.rearingKnots+conf.flyingKnots+k])]
 
 
         f0 = np.matrix(conf.jumpLength).T
@@ -262,7 +254,7 @@ class SimpleQuadrupedalGaitProblem:
         f0[2] = df
         landed = [
             self.createSwingFootModel(conf, four_foot_support, comTask=comRef + m2a(f0))
-            for k in range(conf.groundKnots)
+            for k in range(conf.landingKnots)
         ]
         
         #terminal state        
@@ -273,6 +265,7 @@ class SimpleQuadrupedalGaitProblem:
         
         
         loco3dModel += takeOff
+        loco3dModel += rearing
         loco3dModel += flyingUpPhase
         loco3dModel += flyingDownPhase
         loco3dModel += landingPhase
@@ -293,20 +286,20 @@ class SimpleQuadrupedalGaitProblem:
                 
             for foot_id in four_foot_support:
                 contact_key = [key for key in contacts.keys() if str(foot_id) in key]
-                friction_key = [key for key in costs.keys() if str(foot_id) in key]
-                assert(len(contact_key)==1)
-                assert(len(friction_key)==1)
-                cost_data = costs[friction_key[0]]
-                if isinstance(cost_data, CostDataForceLinearCone):
-                    cost_data.contact = contacts[contact_key[0]]
-                elif isinstance(cost_data, CostDataNumDiff):
-                    cost_data.data0.contact = contacts[contact_key[0]]
-                    for datax in cost_data.datax:
-                        datax.contact = contacts[contact_key[0]]
-                    for datau in cost_data.datau:
-                        datau.contact = contacts[contact_key[0]]
-                else:
-                    assert(False)
+                if len(contact_key)==1:
+                    friction_key = [key for key in costs.keys() if str(foot_id) in key]
+                    assert(len(friction_key)==1)
+                    cost_data = costs[friction_key[0]]
+                    if isinstance(cost_data, CostDataForceLinearCone):
+                        cost_data.contact = contacts[contact_key[0]]
+                    elif isinstance(cost_data, CostDataNumDiff):
+                        cost_data.data0.contact = contacts[contact_key[0]]
+                        for datax in cost_data.datax:
+                            datax.contact = contacts[contact_key[0]]
+                        for datau in cost_data.datau:
+                            datau.contact = contacts[contact_key[0]]
+                    else:
+                        assert(False)
                     
         
         return problem

@@ -17,17 +17,29 @@ reginit = .1
 #
 nv = 18
 
-
 #task params
 jumpHeight =  0.15
-jumpLength = [0.3, 0.0, 0.]
+
+step = dict()
+#test_name = 'FLAT'
+test_name = 'PALLET'
+step['FLAT']  = [0.3, 0.0, 0.0]
+step['PALLET'] = [0.95, 0.0, 0.14]
+
+params =[]
+
+jumpLength = step[test_name]
+
+
+
 timeStep = 1.0e-2
 groundKnots = 45
 flyingKnots = 20
 
+
 mu = 0.5
 contact_normal = np.array([0.0, 0.0, 1.0])
-clearance = 0.15
+clearance = 0.2
 
 #weights
 weight_array_com = np.array([1., 0., 1.0])
@@ -39,7 +51,7 @@ weight_postural = 1e-02
 weight_joint_limits = 1e1
 weight_control = 1e-04
 weight_friction = 1e-1
-weight_clearance = 1e1
+weight_clearance = 1e2
 
 weight_foot_pos_impact_xy = 1e4
 weight_foot_pos_impact_z = 1e07
@@ -64,7 +76,7 @@ weight_postural_terminal_velocity = 1e05
 dt  = 0.001
 
 
-data_file = 'optim_traj.npz'
+data_file = test_name+'.npz'
 #TODO robot  urdf
 #urdf = path + '/urdf/romeo.urdf'
 #srdf = path + '/srdf/romeo_collision.srdf'

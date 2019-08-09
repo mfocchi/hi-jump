@@ -189,12 +189,12 @@ class SimpleQuadrupedalGaitProblem:
         
         footPosRelativeZ = np.zeros(2*conf.flyingKnots)           
         for i in range(2*conf.flyingKnots):
-            if (i < conf.flyingKnots/4):                
-                footPosRelativeZ[i] =  conf.clearance * i / (conf.flyingKnots/4)
-            elif (i >= conf.flyingKnots/4) and (i < conf.flyingKnots*3/2):
+            if (i < conf.retractIndex):                
+                footPosRelativeZ[i] =  conf.clearance * i / (conf.retractDuration)
+            elif (i >= conf.retractIndex) and (i < conf.extendIndex):
                 footPosRelativeZ[i] = conf.clearance 
-            elif (i >= conf.flyingKnots*3/2) and (i < conf.flyingKnots*2):
-                footPosRelativeZ[i] = conf.clearance - conf.clearance*(i- conf.flyingKnots*3/2)/(conf.flyingKnots/2) 
+            elif (i >= conf.extendIndex) and (i < conf.flyingKnots*2):
+                footPosRelativeZ[i] = conf.clearance - conf.clearance*(i - conf.extendIndex)/(conf.extendDuration) 
             else:
                 print "out of bounds"
                 

@@ -49,6 +49,12 @@ weight_postural_impact = 1e1
 kp_contact = 0.
 kd_contact = 1.0/timeStep
 
+#obstacle avoidance time parmaterized trapezoidal function
+retractDuration = 10
+extendDuration = 1
+retractIndex = retractDuration
+extendIndex = (flyingKnots*2) - extendDuration
+
 
 #terminal state
 weight_array_postural_terminal_velocity = np.array([0] * 3 + [1.] * 3 + [0.0] * (nv - 6) + [1.] * nv)

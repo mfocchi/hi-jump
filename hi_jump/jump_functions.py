@@ -371,12 +371,17 @@ class SimpleQuadrupedalGaitProblem:
                                          activation=activation)
             costModel.addCost("jointLim", jointLimits, conf.weight_joint_limits)
         
+        if conf.weight_torque_limits>0.0:
+            #print self.rmodel.effortLimit.T
+            activation =  ActivationModelInequality(-m2a(self.rmodel.effortLimit)[6:], m2a(self.rmodel.effortLimit)[6:])
+            torqueLimits = CostModelControl(self.rmodel, actModel.nu, activation=activation)
+            costModel.addCost("torqueLim", torqueLimits, conf.weight_torque_limits)
+            
         stateReg = CostModelState(self.rmodel, self.state, self.rmodel.defaultState, actModel.nu,
                                   ActivationModelWeightedQuad(conf.weight_array_postural**2))
-                         
+        costModel.addCost("stateReg", stateReg, conf.weight_postural)                 
                   
         ctrlReg = CostModelControl(self.rmodel, actModel.nu)
-        costModel.addCost("stateReg", stateReg, conf.weight_postural)
         costModel.addCost("ctrlReg", ctrlReg, conf.weight_control)
 
         # Creating the action model for the KKT dynamics with simpletic Euler

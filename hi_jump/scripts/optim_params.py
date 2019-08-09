@@ -4,15 +4,14 @@ import os
 np.set_printoptions(precision=3, linewidth=200, suppress=True)
 
 ENABLE_DISPLAY = True# 'disp' in sys.argv
-ENABLE_PLOT = False #'plot' in sys.argv
+ENABLE_PLOT = 1 #'plot' in sys.argv
 
 home_config = 'half_sitting'
 
 #solver 
 th_stop = 1e-9
-maxiter = 200
+maxiter = 40
 reginit = .1
-
 
 #
 nv = 18
@@ -33,9 +32,9 @@ jumpLength = step[test_name]
 
 
 timeStep = 1.0e-2
-groundKnots = 45
+takeOffKnots = 45
 flyingKnots = 20
-
+landingKnots = 45
 
 mu = 0.5
 contact_normal = np.array([0.0, 0.0, 1.0])
@@ -48,7 +47,7 @@ weight_com = 1e4
 
 weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.1] * nv)
 weight_postural = 1e-02
-weight_joint_limits = 1e1
+weight_joint_limits = 0e1
 weight_control = 1e-04
 weight_friction = 1e-1
 weight_clearance = 1e2

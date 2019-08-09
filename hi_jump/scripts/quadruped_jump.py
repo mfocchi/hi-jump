@@ -19,6 +19,7 @@ class CallbackJump:
 
     def __call__(self, solver):
         cost_total = {}
+        N = {}
         for i, (m, d) in enumerate(zip(solver.problem.runningModels, solver.problem.runningDatas)):
             if "differential" in d.__dict__.keys():
                 costs_data = d.differential.costs.costs
@@ -29,11 +30,15 @@ class CallbackJump:
                 
             for key in costs_data.keys():
                 if key not in cost_total:
-                    cost_total[key] = 0.0
-                cost_total[key] += costs_model[key].weight * costs_data[key].cost
+                    cost_total[key] = [0.0, 0.0]
+                    N[key] = 0
+                cost_total[key][0] += costs_data[key].cost
+                cost_total[key][1] += costs_model[key].weight * costs_data[key].cost
+                N[key] += 1
         print ""
         for key in np.sort(cost_total.keys()):
-            print "   %18s \t %10.2f"%(key, cost_total[key])
+            print "   %18s \t %10.2f \t %10.2f"%(key, np.sqrt(2*cost_total[key][0]/N[key]), 
+                                                 cost_total[key][1])
                    
 # Loading the HyQ model
 ROBOT =  utils.loadHyQ()

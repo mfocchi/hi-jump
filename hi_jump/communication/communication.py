@@ -34,7 +34,7 @@ from sensor_msgs.msg import JointState
 from tf.transformations import euler_from_quaternion
 from std_srvs.srv import Empty
 from termcolor import colored
-from jet_leg.hyq_kinematics import HyQKinematics
+#from jet_leg.hyq_kinematics import HyQKinematics
 
 from utils import Utils
 from jet_leg.math_tools import Math
@@ -47,6 +47,8 @@ import hi_jump.utils as  hijump_utils
 
 #important
 np.set_printoptions(precision = 3, linewidth = 200, suppress = True)
+np.set_printoptions(threshold=np.inf) 
+#prints full matrix
 
 #prevent creating pyc files
 sys.dont_write_bytecode = True
@@ -231,15 +233,15 @@ class ControlThread(threading.Thread):
     def get_jstate(self):
         return self.q
 
-    def initKinematics(self,kin):
-        kin.init_homogeneous()
-        kin.init_jacobians()
-
-    def updateKinematics(self,kin):
-        # q is continuously updated
-        kin.update_homogeneous(self.q)
-        kin.update_jacobians(self.q)
-        self.actual_feetB = kin.forward_kin(self.q)
+#    def initKinematics(self,kin):
+#        kin.init_homogeneous()
+#        kin.init_jacobians()
+#
+#    def updateKinematics(self,kin):
+#        # q is continuously updated
+#        kin.update_homogeneous(self.q)
+#        kin.update_jacobians(self.q)
+#        self.actual_feetB = kin.forward_kin(self.q)
 
     def plotJoints(self, q, q_des, label="q"):
         plt.figure()
@@ -332,7 +334,7 @@ def talker(p):
     p.register_node()
 
     #create the objects
-    kin = HyQKinematics()
+#    kin = HyQKinematics()
     math = Math()
 
 
@@ -397,9 +399,9 @@ def talker(p):
 
     
     #init the kinematics (homogeneous and jacobians for feet position I guess)
-    p.initKinematics(kin)
-    #update the kinematics
-    p.updateKinematics(kin)
+#    p.initKinematics(kin)
+#    #update the kinematics
+#    p.updateKinematics(kin)
     # p.basePoseW[p.u.sp_crd["LX"]: p.u.sp_crd["LX"]+3] = np.array([1.5, 0, 0.6])
  
     # for loop 
@@ -418,6 +420,9 @@ def talker(p):
     time_start = np.zeros(N)
     time_spent = np.zeros(N)
     p.start_log()
+
+  
+    
     for i in range(N):
         time_start[i] =  time.time()       
 #        if (i%15 ==0 ):        print p.u.mapFromRos(qd_des_array[i,:])
@@ -451,31 +456,31 @@ def talker(p):
     print 'de registering...'
     p.deregister_node()    
     
-#    p.plotJoints(q_array, q_des_array, label="q")
-#    p.plotJoints(qd_array, qd_des_array, label="qd")
-#    p.plotJoints(tau_array, tau_des_array, label="tau")
+    p.plotJoints(q_array, q_des_array, label="q")
+    p.plotJoints(qd_array, qd_des_array, label="qd")
+    p.plotJoints(tau_array, tau_des_array, label="tau")
     p.plotGRF(np.array(p.f_log), f_des_array)
-#    p.plotCones(np.array(p.f_log), f_des_array)
+    p.plotCones(np.array(p.f_log), f_des_array)
 #    
-#    plt.figure()
-#    for i in range(3):
-#        plt.plot(x_base_array[:,i], label='x base '+str(i))
-#        plt.plot(x_base_des_array[:,i], '--', label='x base des '+str(i))
-#    plt.legend()  
-#    p.saveFigure('x_base')
-#    plt.figure()
-#    for i in range(3):
-#        plt.plot(v_base_array[:,i], label='v base '+str(i))
-#        plt.plot(v_base_des_array[:,i], '--', label='v base des '+str(i))
-#    plt.legend()
-#    plt.show()  
-#    p.saveFigure('v_base')
+    plt.figure()
+    for i in range(3):
+        plt.plot(x_base_array[:,i], label='x base '+str(i))
+        plt.plot(x_base_des_array[:,i], '--', label='x base des '+str(i))
+    plt.legend()  
+    p.saveFigure('x_base')
+    plt.figure()
+    for i in range(3):
+        plt.plot(v_base_array[:,i], label='v base '+str(i))
+        plt.plot(v_base_des_array[:,i], '--', label='v base des '+str(i))
+    plt.legend()
+    plt.show()  
+    p.saveFigure('v_base')
 
 #    ROBOT =  hijump_utils.loadHyQ()
 #    hijump_utils.setWhiteBackground(ROBOT)
 #    ts = np.ones(x_base_array.shape[0])*p.conf.dt
 #    hijump_utils.displayPhaseMotion(ROBOT, np.hstack((x_base_array, q_ros_array)), 10*ts)
-#    
+    
 #    plt.figure()
 #    for i in range(3):
 #        plt.plot(euler_array[:,i], label='euler '+str(i))

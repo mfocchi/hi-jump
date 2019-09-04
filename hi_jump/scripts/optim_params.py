@@ -90,4 +90,10 @@ data_file = test_name+'.npz'
 cameraTF = [2., 2.68, 0.84, 0.2, 0.62, 0.72, 0.22]
 
 
+height_map_resolution = 0.01 
+height_map_size = 1.0
+edge_position = 0.4
+# Box Blur kernel
+kernel_size  = 3
+
 SAVE_FIGURES = False

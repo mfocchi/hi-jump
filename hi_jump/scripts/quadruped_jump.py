@@ -10,7 +10,7 @@ import optim_params as conf
 from tf.transformations import euler_from_quaternion
 import time
 import copy
-
+from hi_jump.height_map_filter import createCustomMap,smoothHeightMap, plotHeightMap, computeDerivative
 
     
 class CallbackJump:
@@ -60,6 +60,16 @@ rfFoot = 'rf_foot'
 lhFoot = 'lh_foot'
 rhFoot = 'rh_foot'
 
+# get height map
+    
+height_map = createCustomMap(conf.edge_position, conf.height_map_resolution, conf.height_map_size)
+height_map_blur = smoothHeightMap(conf.kernel_size, height_map)
+height_map_der_x = computeDerivative(height_map_blur, conf.height_map_resolution,'X')
+height_map_der_y = computeDerivative(height_map_blur, conf.height_map_resolution,'Y')
+
+#plotHeightMap(height_map_blur)
+
+
 #TODO NOT CLEAR
 gait = quadruped.SimpleQuadrupedalGaitProblem(conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot)
 callbacks = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), CallbackJump()]
@@ -104,7 +114,7 @@ x0 = ddp.xs[-1]
 # Display the entire motion
 if conf.ENABLE_DISPLAY:
     time.sleep(2.0)
-    ts = [10*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
+    ts = [30*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
     utils.displayPhaseMotion(ROBOT, ddp.xs, ts)
 
 # Plotting the entire motion

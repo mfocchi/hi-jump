@@ -31,7 +31,8 @@ def displayPhaseMotion(robot, qs, ts):
             time.sleep(dt)
             
 def loadHyQ(modelPath='/opt/openrobots/share/example-robot-data'):
-    URDF_FILENAME = "hyq_last.urdf"
+    #URDF_FILENAME = "hyq_last.urdf" #no torque limits
+    URDF_FILENAME = "hyq_last_torque_lim.urdf"
     URDF_SUBPATH = "/hyq_description/robots/" + URDF_FILENAME
     robot = RobotWrapper.BuildFromURDF(modelPath + URDF_SUBPATH, [modelPath], se3.JointModelFreeFlyer())
     # TODO define default position inside srdf

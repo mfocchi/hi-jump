@@ -58,7 +58,7 @@ weight_control = 1e-04
 weight_friction = 1e-1
 weight_clearance = 1e2
 
-weight_foot_pos_impact_xy = 1e4
+weight_foot_pos_impact_xy = 1e5
 weight_foot_pos_impact_z = 1e07
 weight_array_postural_impact =  np.array([0.]*3 + [0.]*3 + [10.0] * (nv - 6) + [10.] * nv)
 weight_postural_impact = 1e1

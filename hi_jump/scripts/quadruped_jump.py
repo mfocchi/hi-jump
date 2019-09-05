@@ -11,6 +11,13 @@ from tf.transformations import euler_from_quaternion
 import time
 import copy
 from hi_jump.height_map_filter import createCustomMap,smoothHeightMap, plotHeightMap, computeDerivative
+import matplotlib.pyplot as plt
+
+import rospy as ros
+#from geometry_msgs.msg import Point
+from ros_impedance_controller.srv import get_map
+from ros_impedance_controller.srv import get_mapRequest
+from ros_impedance_controller.srv import get_mapResponse
 
     
 class CallbackJump:
@@ -60,12 +67,37 @@ rfFoot = 'rf_foot'
 lhFoot = 'lh_foot'
 rhFoot = 'rh_foot'
 
-# get height map
+# get custom height map
     
 height_map = createCustomMap(conf.edge_position, conf.height_map_resolution, conf.height_map_size)
 height_map_blur = smoothHeightMap(conf.kernel_size, height_map)
 height_map_der_x = computeDerivative(height_map_blur, conf.height_map_resolution,'X')
 height_map_der_y = computeDerivative(height_map_blur, conf.height_map_resolution,'Y')
+#plotHeightMap(height_map_blur) 
+   
+#get real height map
+get_map_service = ros.ServiceProxy("/hyq/ros_impedance_controller/get_map", get_map)
+# prepare request
+req_msg = get_mapRequest()
+req_msg.target.x = 0.5
+req_msg.target.y = 0.0
+req_msg.width = 3.0
+req_msg.length = 3.0 
+req_msg.resolution_x = 0.1 
+req_msg.resolution_y = 0.1 
+
+
+#send request and get response
+res = get_mapResponse()
+res  =  get_map_service(req_msg)   
+
+#unvectorize message
+col_length= (int)(len(res.height_array)/ res.row_length)
+hegihtMap = np.zeros((col_length, res.row_length))          
+for i in range(col_length):
+    for j in range(res.row_length):
+        hegihtMap[i, j] = res.height_array[i*res.row_length + j]
+        
 
 #plotHeightMap(height_map_blur)
 

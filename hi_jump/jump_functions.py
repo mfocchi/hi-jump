@@ -7,7 +7,7 @@ from crocoddyl import (ActivationModelWeightedQuad, ActivationModelInequality, A
                        CostModelSum, DifferentialActionModelFloatingInContact, IntegratedActionModelEuler,
                        ImpulseModelMultiple, ImpulseModel3D, ShootingProblem, SolverDDP, SolverFDDP, StatePinocchio,
                        a2m, displayTrajectory, loadHyQ, m2a, CostDataForceLinearCone, ActionDataImpact,
-                       CostModelNumDiff, CostDataNumDiff)
+                       CostModelNumDiff, CostDataNumDiff, CostModelHeightMapDistance)
 
 
 def plotSolution(rmodel, xs, us):
@@ -137,6 +137,7 @@ class TaskSE3:
 class SimpleQuadrupedalGaitProblem:
     def __init__(self, conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot, heightMap=None):
         self.rmodel = rmodel
+        self.heightMap = heightMap
         self.rdata = rmodel.createData()
         self.state = StatePinocchio(self.rmodel)
         # Getting the frame id for all the legs
@@ -228,17 +229,17 @@ class SimpleQuadrupedalGaitProblem:
         two_foot_support = [ self.lhFootId,  self.rhFootId]
         rearing = []
         for k in range(conf.rearingKnots):
-            rearing += [self.createSwingFootModel(conf, two_foot_support, clearanceTask = clearanceTasks[k])]
+            rearing += [self.createSwingFootModel(conf, two_foot_support, clearanceTask = clearanceTasks[k], clearance = conf.clearance)]
 
         flyingUpPhase = []      
         for k in range(conf.flyingKnots):
             flyingUpPhase += [self.createSwingFootModel(conf, [],
                                       np.array([0.5*conf.jumpLength[0], 0.5*conf.jumpLength[1],  conf.jumpHeight]) * (k + 1) / conf.flyingKnots + comRef, 
-                                      clearanceTask = clearanceTasks[conf.rearingKnots+k])]
+                                      clearanceTask = clearanceTasks[conf.rearingKnots+k], clearance = conf.clearance)]
 
         flyingDownPhase = []
         for k in range(conf.flyingKnots):                             
-            flyingDownPhase += [self.createSwingFootModel(conf, [], clearanceTask = clearanceTasks[conf.rearingKnots+conf.flyingKnots+k])]
+            flyingDownPhase += [self.createSwingFootModel(conf, [], clearanceTask = clearanceTasks[conf.rearingKnots+conf.flyingKnots+k], clearance = conf.clearance*0.3)]
 
 
         f0 = np.matrix(conf.jumpLength).T
@@ -305,7 +306,7 @@ class SimpleQuadrupedalGaitProblem:
         return problem
 
  
-    def createSwingFootModel(self, conf, supportFootIds, comTask=None, clearanceTask=None):
+    def createSwingFootModel(self, conf, supportFootIds, comTask=None, clearanceTask=None, clearance = 0.0):
         """ Action model for a swing foot phase.
 
         :param timeStep: step duration of the action model
@@ -348,14 +349,15 @@ class SimpleQuadrupedalGaitProblem:
         if clearanceTask is not None and conf.weight_clearance > 0:
             for foot in clearanceTask:
                 #set clearance only on z component
-                activation = ActivationModelInequality(np.array([-1e08, -1e08, 0.0 ]), 
-                                                             np.array([1e08, 1e08, 1e08]))    
-                clearanceTrack = \
-                        CostModelFrameTranslation(self.rmodel,
-                                                  foot['id'],
-                                                  foot['pos'],
-                                                  nu=0,
-                                                  activation = activation)           
+#                activation = ActivationModelInequality(np.array([-1e08, -1e08, 0.0 ]), 
+#                                                             np.array([1e08, 1e08, 1e08]))    
+#                clearanceTrack = \
+#                        CostModelFrameTranslation(self.rmodel,
+#                                                  foot['id'],
+#                                                  foot['pos'],
+#                                                  nu=0,
+#                                                  activation = activation)           
+                clearanceTrack = CostModelHeightMapDistance(self.rmodel, foot['id'], self.heightMap,  nu=0, clearance = clearance)
                 costModel.addCost("clearanceTrack_" + str(foot['id']), clearanceTrack, conf.weight_clearance)
                 
         

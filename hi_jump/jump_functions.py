@@ -135,7 +135,7 @@ class TaskSE3:
 
 
 class SimpleQuadrupedalGaitProblem:
-    def __init__(self, conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot):
+    def __init__(self, conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot, heightMap=None):
         self.rmodel = rmodel
         self.rdata = rmodel.createData()
         self.state = StatePinocchio(self.rmodel)

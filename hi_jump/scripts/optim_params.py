@@ -22,11 +22,13 @@ jumpHeight =  0.15
 step = dict()
 clearance_height = dict()
 #test_name = 'FLAT'
-test_name = 'FLAT'
-step['FLAT']  = [0.3, 0.0, 0.0]
-step['PALLET'] = [1.0, 0.0, 0.16]
+test_name = 'PALLET'
+pallet_size = [2.0, 2.0, 0.16]
+pallet_pos = [1.55, 0.0, 0.08]
+step['FLAT']  = [0.2, 0.0, 0.0]
+step['PALLET'] = [1.0, 0.0, pallet_size[2]]
 clearance_height['FLAT']  = 0.1
-clearance_height['PALLET'] = 0.2
+clearance_height['PALLET'] = 0.05
 
 
 params =[]
@@ -87,12 +89,13 @@ data_file = test_name+'.npz'
 #srdf = path + '/srdf/romeo_collision.srdf'
 
 #visualization
-cameraTF = [2., 2.68, 0.84, 0.2, 0.62, 0.72, 0.22]
+cameraTF = None #[2., 2.68, 0.84, 0.2, 0.62, 0.72, 0.22]
 
 
-height_map_resolution = 0.01 
-height_map_size = 1.0
-edge_position = 0.4
+height_map_resolution = np.array([0.01, 0.01]) 
+height_map_xy0 = np.array([-0.5, 1.5])
+height_map_size = 3.0
+edge_position = pallet_pos[0]-0.5*pallet_size[0]-height_map_xy0[0]
 # Box Blur kernel
 kernel_size  = 3
 

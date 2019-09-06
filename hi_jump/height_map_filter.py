@@ -143,12 +143,12 @@ def plotHeightMap(map, llimit = 0, ulimit = 1):
     
     
 
-def createCustomMap(edge_position, height_map_resolution, height_map_size):
+def createPalletMap(pallet_height, edge_position, height_map_resolution, height_map_size):
     #buld custom height map
     index_edge_position = (int)(edge_position /height_map_resolution)
     number_of_cells = (int)(height_map_size / height_map_resolution)
     height_map = np.zeros((number_of_cells,number_of_cells))
-    height_map[:,index_edge_position:number_of_cells] = 1.0
+    height_map[:,index_edge_position:number_of_cells] = pallet_height
 #    height_map[index_edge_position:number_of_cells,:] = 1.0
     
     return height_map
@@ -166,12 +166,12 @@ if __name__ == '__main__':
 #    print height_map
 #    plotHeightMap(height_map)    
     height_map_blur = smoothHeightMap(kernel_size, height_map)
-#    plotHeightMap(height_map_blur)
-#    print height_map_blur        
+    plotHeightMap(height_map_blur)
+    print height_map_blur        
 
     height_map_der = computeDerivative(height_map_blur, height_map_resolution,'Y')
     print height_map_der
-    plotHeightMap(height_map_der,0,100)
+    plotHeightMap(height_map_der)
 
     ## Create output image 
     #output_image.show()     

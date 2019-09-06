@@ -10,7 +10,8 @@ import optim_params as conf
 from tf.transformations import euler_from_quaternion
 import time
 import copy
-from hi_jump.height_map_filter import createCustomMap,smoothHeightMap, plotHeightMap, computeDerivative
+from hi_jump.height_map_filter import createPalletMap,smoothHeightMap, plotHeightMap, computeDerivative
+from crocoddyl.cost import HeightMap
 import matplotlib.pyplot as plt
 
 import rospy as ros
@@ -42,7 +43,8 @@ class CallbackJump:
                 cost_total[key][0] += costs_data[key].cost
                 cost_total[key][1] += costs_model[key].weight * costs_data[key].cost
                 N[key] += 1
-        print ""
+        
+        print "\n   %18s \t %10s \t %10s"%('TASK NAME', 'AVG COST', 'WEIGHTED COST')
         for key in np.sort(cost_total.keys()):
             print "   %18s \t %10.2f \t %10.2f"%(key, np.sqrt(2*cost_total[key][0]/N[key]), 
                                                  cost_total[key][1])
@@ -52,6 +54,11 @@ ROBOT =  utils.loadHyQ()
 
 if conf.ENABLE_DISPLAY:
     utils.setWhiteBackground(ROBOT)
+    ROBOT.viewer.gui.addBox("world/pallet", conf.pallet_size[0], conf.pallet_size[1], conf.pallet_size[2], (1.0,0.2,.2,.5))
+    ROBOT.viewer.gui.setColor("world/pallet", (1.,0.,0.,1.))
+    ROBOT.viewer.gui.applyConfiguration("world/pallet", (conf.pallet_pos[0], conf.pallet_pos[1], conf.pallet_pos[2], 0,0,0,1))
+    ROBOT.viewer.gui.setLightingMode("world/pallet", "ON")
+#    ROBOT.viewer.gui.addLight("world/michilight", 0, 5.0, (1.,1.,1.,1.))
 
 rmodel = ROBOT.model
 rdata = rmodel.createData()
@@ -69,12 +76,17 @@ rhFoot = 'rh_foot'
 
 # get custom height map
     
-height_map = createCustomMap(conf.edge_position, conf.height_map_resolution, conf.height_map_size)
+height_map = createPalletMap(conf.pallet_size[2], conf.edge_position, 
+                             conf.height_map_resolution[0], conf.height_map_size)
 height_map_blur = smoothHeightMap(conf.kernel_size, height_map)
-height_map_der_x = computeDerivative(height_map_blur, conf.height_map_resolution,'X')
-height_map_der_y = computeDerivative(height_map_blur, conf.height_map_resolution,'Y')
+height_map_der_x = computeDerivative(height_map_blur, conf.height_map_resolution[0],'X')
+height_map_der_y = computeDerivative(height_map_blur, conf.height_map_resolution[1],'Y')
 #plotHeightMap(height_map_blur) 
    
+heightMap = HeightMap(height_map_blur, conf.height_map_xy0, conf.height_map_resolution, height_map_der_x, height_map_der_y)
+#for x in np.arange(0.0, 0.5, 0.01):
+#    print "Height for x=%.2f: %.2f"%(x, heightMap.getHeight(np.array([x,0.0])))
+    
 #get real height map
 #get_map_service = ros.ServiceProxy("/hyq/ros_impedance_controller/get_map", get_map)
 ## prepare request
@@ -105,7 +117,7 @@ height_map_der_y = computeDerivative(height_map_blur, conf.height_map_resolution
 
 
 #TODO NOT CLEAR
-gait = quadruped.SimpleQuadrupedalGaitProblem(conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot)
+gait = quadruped.SimpleQuadrupedalGaitProblem(conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot, heightMap)
 callbacks = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), CallbackJump()]
 if conf.ENABLE_DISPLAY:
     callbacks += [crocoddyl.CallbackSolverDisplayParallel(ROBOT, -1, 1, conf.cameraTF)]
@@ -148,7 +160,7 @@ x0 = ddp.xs[-1]
 # Display the entire motion
 if conf.ENABLE_DISPLAY:
     time.sleep(2.0)
-    ts = [30*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
+    ts = [10*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
     utils.displayPhaseMotion(ROBOT, ddp.xs, ts)
 
 # Plotting the entire motion

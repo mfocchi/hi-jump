@@ -76,28 +76,30 @@ height_map_der_y = computeDerivative(height_map_blur, conf.height_map_resolution
 #plotHeightMap(height_map_blur) 
    
 #get real height map
-get_map_service = ros.ServiceProxy("/hyq/ros_impedance_controller/get_map", get_map)
-# prepare request
-req_msg = get_mapRequest()
-req_msg.target.x = 0.5
-req_msg.target.y = 0.0
-req_msg.width = 3.0
-req_msg.length = 3.0 
-req_msg.resolution_x = 0.1 
-req_msg.resolution_y = 0.1 
+#get_map_service = ros.ServiceProxy("/hyq/ros_impedance_controller/get_map", get_map)
+## prepare request
+#req_msg = get_mapRequest()
+#req_msg.target.x = 0.5
+#req_msg.target.y = 0.0
+#req_msg.width = 3.0
+#req_msg.length = 3.0 
+#req_msg.resolution_x = 0.1 
+#req_msg.resolution_y = 0.1 
 
 
 #send request and get response
-res = get_mapResponse()
-res  =  get_map_service(req_msg)   
-
-#unvectorize message
-col_length= (int)(len(res.height_array)/ res.row_length)
-hegihtMap = np.zeros((col_length, res.row_length))          
-for i in range(col_length):
-    for j in range(res.row_length):
-        hegihtMap[i, j] = res.height_array[i*res.row_length + j]
-        
+#res = get_mapResponse()
+#res  =  get_map_service(req_msg)   
+#
+##unvectorize message
+#col_length= (int)(len(res.height_array)/ res.row_length)
+#heightMap = np.zeros((col_length, res.row_length))          
+#for i in range(col_length):
+#    for j in range(res.row_length):
+#        heightMap[i, j] = res.height_array[i*res.row_length + j]
+#
+#plotHeightMap(heightMap)
+#plt.show()
 
 #plotHeightMap(height_map_blur)
 

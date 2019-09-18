@@ -6,11 +6,14 @@ np.set_printoptions(precision=3, linewidth=200, suppress=True)
 ENABLE_DISPLAY = True# 'disp' in sys.argv
 ENABLE_PLOT = 1 #'plot' in sys.argv
 
-home_config = 'half_sitting'
 
+q0 = [0, 0, 0.5749, 0, 0, 0, 1, -0.2, 0.75, -1.5, -0.2, -0.75, 1.5, -0.2, 0.75, -1.5, -0.2, -0.75, 1.5]
+urdfFileName = "hyq_last_torque_lim.urdf"
+urdfSubPath = "/hyq_description/robots/"
+ 
 #solver 
 th_stop = 1e-9
-maxiter = 40
+maxiter = 30
 reginit = .1
 
 #
@@ -23,8 +26,14 @@ step = dict()
 clearance_height = dict()
 #test_name = 'FLAT'
 test_name = 'PALLET'
-pallet_size = [2.0, 2.0, 0.16]
-pallet_pos = [1.55, 0.0, 0.08]
+pallet_size = [2.0, 2.0, 0.1]
+pallet_pos = [1.5, 0.0, pallet_size[2]/2]
+
+
+pallet2_size = [0.1, pallet_size[1]/2,  pallet_size[2]/2]
+pallet2_pos = [0.55, 0.5, pallet_size[2]+pallet2_size[2]/2]
+
+
 step['FLAT']  = [0.2, 0.0, 0.0]
 step['PALLET'] = [1.0, 0.0, pallet_size[2]]
 clearance_height['FLAT']  = 0.1
@@ -35,7 +44,10 @@ params =[]
 
 jumpLength = step[test_name]
 
-
+lfFoot = 'lf_foot'
+rfFoot = 'rf_foot'
+lhFoot = 'lh_foot'
+rhFoot = 'rh_foot'
 
 timeStep = 1.0e-2
 takeOffKnots = 45
@@ -54,11 +66,12 @@ weight_com = 1e4
 
 weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.1] * nv)
 weight_postural = 1e-02
-weight_joint_limits = 1e1
-weight_torque_limits = 1e1
-weight_control = 1e-04
+weight_joint_limits = 0*1e3
+
+weight_torque_limits = 0* 1e1
+weight_control = 1e-06
 weight_friction = 1e-1
-weight_clearance = 1e2
+weight_clearance = 1e4
 
 weight_foot_pos_impact_xy = 1e5
 weight_foot_pos_impact_z = 1e07

@@ -6,7 +6,8 @@ from crocoddyl import a2m, m2a
 import hi_jump.jump_functions as quadruped
 from hi_jump.jump_functions import interpolate_trajectory
 import hi_jump.utils as utils
-import optim_params as conf
+import optim_params_solo as conf
+#import optim_params_hyq as conf
 from tf.transformations import euler_from_quaternion
 import time
 import copy
@@ -50,7 +51,7 @@ class CallbackJump:
                                                  cost_total[key][1])
                    
 # Loading the HyQ model
-ROBOT =  utils.loadHyQ()
+ROBOT =  utils.loadRobot(conf.urdfFileName, conf.urdfSubPath, conf.q0)
 
 if conf.ENABLE_DISPLAY:
     utils.setWhiteBackground(ROBOT)
@@ -69,15 +70,11 @@ rmodel = ROBOT.model
 rdata = rmodel.createData()
 
 # Defining the initial state of the robot
-q0 = rmodel.referenceConfigurations[conf.home_config].copy()
+q0 = rmodel.referenceConfigurations['half_sitting'].copy()
 v0 = se3.utils.zero(rmodel.nv)
 x0 = crocoddyl.m2a(np.concatenate([q0, v0]))
 
 # Setting up the 3d walking problem
-lfFoot = 'lf_foot'
-rfFoot = 'rf_foot'
-lhFoot = 'lh_foot'
-rhFoot = 'rh_foot'
 
 # get custom height map
     
@@ -127,7 +124,7 @@ heightMap = HeightMap(height_map_blur, conf.height_map_xy0, conf.height_map_reso
 
 
 #TODO NOT CLEAR
-gait = quadruped.SimpleQuadrupedalGaitProblem(conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot, heightMap)
+gait = quadruped.SimpleQuadrupedalGaitProblem(conf, rmodel, heightMap)
 callbacks = [crocoddyl.CallbackDDPLogger(), crocoddyl.CallbackDDPVerbose(), CallbackJump()]
 if conf.ENABLE_DISPLAY:
     callbacks += [crocoddyl.CallbackSolverDisplayParallel(ROBOT, -1, 1, conf.cameraTF)]
@@ -170,7 +167,7 @@ x0 = ddp.xs[-1]
 # Display the entire motion
 if conf.ENABLE_DISPLAY:
     time.sleep(2.0)
-    ts = [10*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
+    ts = [30*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
     utils.displayPhaseMotion(ROBOT, ddp.xs, ts)
 
 # Plotting the entire motion

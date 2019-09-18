@@ -1,7 +1,7 @@
 import numpy as np
 from pinocchio.robot_wrapper import RobotWrapper
 import pinocchio as se3
-import optim_params as conf
+
 
 def setWhiteBackground(robot):
     if not hasattr(robot, 'viewer'):
@@ -30,13 +30,15 @@ def displayPhaseMotion(robot, qs, ts):
             robot.display(np.matrix(q).T)
             time.sleep(dt)
             
-def loadHyQ(modelPath='/opt/openrobots/share/example-robot-data'):
+def loadRobot(urdfFileName, urdfSubPath, q0, modelPath='/opt/openrobots/share/example-robot-data'):
     #URDF_FILENAME = "hyq_last.urdf" #no torque limits
-    URDF_FILENAME = "hyq_last_torque_lim.urdf"
-    URDF_SUBPATH = "/hyq_description/robots/" + URDF_FILENAME
-    robot = RobotWrapper.BuildFromURDF(modelPath + URDF_SUBPATH, [modelPath], se3.JointModelFreeFlyer())
+#    URDF_FILENAME = "hyq_last_torque_lim.urdf"
+#    URDF_SUBPATH = "/hyq_description/robots/" + URDF_FILENAME
+
+#    URDF_FILENAME = "solo.urdf" #no torque limits   
+#    URDF_SUBPATH = "/robot_properties_solo/urdf/" + urdfFileName 
+    robot = RobotWrapper.BuildFromURDF(modelPath + urdfSubPath + urdfFileName, [modelPath], se3.JointModelFreeFlyer())
     # TODO define default position inside srdf
-    robot.q0.flat[7:] = [-0.2, 0.75, -1.5, -0.2, -0.75, 1.5, -0.2, 0.75, -1.5, -0.2, -0.75, 1.5]
-    robot.q0[2] = 0.5749
-    robot.model.referenceConfigurations[conf.home_config] = robot.q0
+    robot.q0.flat[:] = q0
+    robot.model.referenceConfigurations['half_sitting'] = robot.q0
     return robot

@@ -135,18 +135,19 @@ class TaskSE3:
 
 
 class SimpleQuadrupedalGaitProblem:
-    def __init__(self, conf, rmodel, lfFoot, rfFoot, lhFoot, rhFoot, heightMap=None):
+    def __init__(self, conf, rmodel, heightMap=None):
         self.rmodel = rmodel
         self.heightMap = heightMap
         self.rdata = rmodel.createData()
         self.state = StatePinocchio(self.rmodel)
         # Getting the frame id for all the legs
-        self.lfFootId = self.rmodel.getFrameId(lfFoot)
-        self.rfFootId = self.rmodel.getFrameId(rfFoot)
-        self.lhFootId = self.rmodel.getFrameId(lhFoot)
-        self.rhFootId = self.rmodel.getFrameId(rhFoot)
+        self.lfFootId = self.rmodel.getFrameId(conf.lfFoot)
+        self.rfFootId = self.rmodel.getFrameId(conf.rfFoot)
+        self.lhFootId = self.rmodel.getFrameId(conf.lhFoot)
+        self.rhFootId = self.rmodel.getFrameId(conf.rhFoot)
         # Defining default state
-        q0 = self.rmodel.referenceConfigurations[conf.home_config]
+        q0 = self.rmodel.referenceConfigurations['half_sitting']
+        print "q0", q0.T
         self.rmodel.defaultState = np.concatenate([m2a(q0), np.zeros(self.rmodel.nv)])
         self.firstStep = True  
         

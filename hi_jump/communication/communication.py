@@ -110,6 +110,7 @@ class ControlThread(threading.Thread):
         self.robot_name = ros.get_param('/robot_name')
         # subscribers
         # contact
+
         self.sub_contact = ros.Subscriber("/"+self.robot_name+"/contacts_state", ContactsState, callback=self._receive_contact, queue_size=100)
         # base pose
         self.sub_pose = ros.Subscriber("/"+self.robot_name+"/ground_truth", Odometry, callback=self._receive_pose, queue_size=100)
@@ -118,15 +119,20 @@ class ControlThread(threading.Thread):
         # publishers
         # impedance controller
         self.pub_des_jstate = ros.Publisher("/"+self.robot_name+"/ros_impedance_controller/command", JointState, queue_size=1)
-        ros.wait_for_service("/"+self.robot_name+"/freeze_base")
-
+        
         # services
         # freezeBase
+        # old deprecated freezebase
+        #ros.wait_for_service("/"+self.robot_name+"/freeze_base")  
         self.freeze_base = ros.ServiceProxy("/"+self.robot_name+"/freeze_base",Empty)
+        
+        
+        #self.freeze_base = ros.ServiceProxy("/gazebo/reset_simulation",Empty)
+
         self.pause_physics_client = ros.ServiceProxy('/gazebo/pause_physics', Empty)
         self.unpause_physics_client = ros.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.set_pd_service = ros.ServiceProxy("/"+self.robot_name+"/ros_impedance_controller/set_pids", set_pids)
-   
+ 
 
     def loadConfig(self):
         return

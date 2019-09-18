@@ -150,29 +150,46 @@ def createPalletMap(pallet_height, edge_position, height_map_resolution, height_
     height_map = np.zeros((number_of_cells,number_of_cells))
     height_map[:,index_edge_position:number_of_cells] = pallet_height
 #    height_map[index_edge_position:number_of_cells,:] = 1.0
-    
+  
     return height_map
+
+def create2PalletMap(pallet_height, edge_position, second_pallet_size, second_pallet_height, height_map_resolution, height_map_size):
+    #buld custom height map
+    index_edge_position = (int)(edge_position /height_map_resolution)
+    number_of_cells = (int)(height_map_size / height_map_resolution)
+    height_map = np.zeros((number_of_cells,number_of_cells))
+    height_map[:,index_edge_position:number_of_cells] = pallet_height   
+    index_second_pallet_size = (int)(second_pallet_size /height_map_resolution)
+
+    height_map[0 : number_of_cells/2, index_edge_position : index_edge_position+index_second_pallet_size ] = pallet_height + second_pallet_height    
+    return height_map
+
+
 
 if __name__ == '__main__':
     
-
-    height_map_resolution = 0.01 
+    pallet_height = 0.16
+    height_map_resolution = 0.01
     height_map_size = 1.0
     edge_position = 0.4
     # Box Blur kernel
     kernel_size  = 3
     
-    height_map = createCustomMap(edge_position, height_map_resolution, height_map_size)
+    height_map = createPalletMap(pallet_height, edge_position, height_map_resolution, height_map_size)
 #    print height_map
 #    plotHeightMap(height_map)    
     height_map_blur = smoothHeightMap(kernel_size, height_map)
-    plotHeightMap(height_map_blur)
+#    plotHeightMap(height_map_blur)
     print height_map_blur        
 
-    height_map_der = computeDerivative(height_map_blur, height_map_resolution,'Y')
-    print height_map_der
+    height_map_der = computeDerivative(height_map_blur, height_map_resolution,'X')
+#    print height_map_der
     plotHeightMap(height_map_der)
-
+    
+    
+    two_pallet_height_map =create2PalletMap(pallet_height, edge_position, 0.1, 0.08, height_map_resolution, height_map_size)   
+    plotHeightMap(two_pallet_height_map)   
+    print two_pallet_height_map
     ## Create output image 
     #output_image.show()     
     #output_image.save("output.png")

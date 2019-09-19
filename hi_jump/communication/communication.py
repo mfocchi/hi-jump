@@ -81,6 +81,7 @@ class ControlThread(threading.Thread):
         self.qd = np.zeros(12)
         self.q_des = np.array([-0.2, 0.7, -1.4, -0.2, 0.7, -1.4, -0.2, -0.7, 1.4, -0.2, -0.7, 1.4]);
         self.qd_des = np.zeros(12)
+        self.qdd_des = np.zeros(12)
         self.tau_ffwd =np.zeros(12)
         self.tau =np.zeros(12)
         
@@ -215,10 +216,15 @@ class ControlThread(threading.Thread):
         self.joint_names = msg.name
         self.numberOfReceivedMessages+=1
         
-    def send_des_jstate(self, q_des, qd_des, tau_ffwd):
+    def send_des_jstate(self, q_des, qd_des, qdd_des, tau_ffwd):
          msg = JointState()
          msg.position = q_des
          msg.velocity = qd_des
+         #remove the torque to accel the motor
+         if  self.conf.armature_inertia>0 :                
+             tau_ffwd -= self.conf.gear_ratio**2 * self.conf.armature_inertia * qdd_des
+
+         
          msg.effort = tau_ffwd                
          self.pub_des_jstate.publish(msg)     
          self.numberOfPublishedMessages+=1
@@ -374,7 +380,7 @@ def talker(p):
     print("reset posture...")
 
     while time.time()-start_t < 1.5: 
-        p.send_des_jstate(p.q_des, p.qd_des, p.tau_ffwd)
+        p.send_des_jstate(p.q_des, p.qd_des, p.qdd_des, p.tau_ffwd)
         time.sleep(p.conf.dt)
     print "q err prima freeze base", (p.q-p.q_des)
     resp = p.freeze_base()    
@@ -385,7 +391,7 @@ def talker(p):
     print("compensating gravity...")
     start_t = time.time()
     while time.time()-start_t < 2.5: 
-        p.send_des_jstate(p.q_des, p.qd_des, gravity_comp)    
+        p.send_des_jstate(p.q_des, p.qd_des,p.qdd_des, gravity_comp)    
         time.sleep(p.conf.dt)
     print "q err post grav comp", (p.q-p.q_des)
     
@@ -437,8 +443,12 @@ def talker(p):
         qd_des_array[i,:] = p.u.mapFromRos(qd_des_array[i,:])
         tau_des_array[i,:] = p.u.mapFromRos(tau_des_array[i,:])
         f_des_array[i,:] = p.u.mapFromRos(f_des_array[i,:])
+        #compute desired acceleration
+        if (i>1):
+             p.qdd_des = (qd_des_array[i,:] - qd_des_array[i-1,:])/p.conf.dt
         
-        p.send_des_jstate(q_des_array[i,:], qd_des_array[i,:], tau_des_array[i,:]) 
+#        sending at each loop the desired state
+        p.send_des_jstate(q_des_array[i,:], qd_des_array[i,:], p.qdd_des, tau_des_array[i,:]) 
         
         q_array[i,:] = p.q
         q_ros_array[i,:] = p.u.mapFromRos(p.q)

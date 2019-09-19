@@ -112,4 +112,6 @@ edge_position = pallet_pos[0]-0.5*pallet_size[0]-height_map_xy0[0]
 # Box Blur kernel
 kernel_size  = 3
 
-SAVE_FIGURES = False
+SAVE_FIGURES = Falsearmature_inertia = 0
+
+armature_inertia = 0

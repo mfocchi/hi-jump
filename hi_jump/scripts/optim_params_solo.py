@@ -113,3 +113,6 @@ edge_position = pallet_pos[0]-0.5*pallet_size[0]-height_map_xy0[0]
 kernel_size  = 3
 
 SAVE_FIGURES = False
+
+armature_inertia = 0.00000447
+gear_ratio = 9 

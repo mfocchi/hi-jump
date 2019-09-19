@@ -7,7 +7,7 @@ ENABLE_DISPLAY = True# 'disp' in sys.argv
 ENABLE_PLOT = 0 #'plot' in sys.argv
 
 
-q0 = [0, 0, 0.3, 0, 0, 0, 1,  0.75, -1.5, 0.75, -1.5,  -0.75, 1.5,  -0.75, 1.5]
+q0 = [0, 0, 0.230085, 0, 0, 0, 1,  -0.2, 0.75, -1.5, -0.2,0.75, -1.5,  -0.2, -0.75, 1.5,  -0.2, -0.75, 1.5]
 urdfFileName = "solo12.urdf" #no torque limits   
 urdfSubPath = "/solo/robots/"
 
@@ -31,8 +31,8 @@ test_name = 'PALLET'
 
 #1 pallet
 if (test_name == 'PALLET'):
-    pallet_size = [2.0, 2.0, 0.16]
-    pallet_pos = [1.5, 0.0, 0.08]
+    pallet_size = [2.0, 2.0, 0.05]
+    pallet_pos = [1.25, 0.0, 0.025]
 #2 pallets
 if (test_name == '2PALLET'):
     pallet_size = [2.0, 2.0, 0.1]
@@ -42,7 +42,7 @@ if (test_name == '2PALLET'):
 
 
 step['FLAT']  = [0.2, 0.0, 0.0]
-step['PALLET'] = [1.0, 0.0, pallet_size[2]]
+step['PALLET'] = [0.5, 0.0, pallet_size[2]]
 step['2PALLET'] = [1.0, 0.0, pallet_size[2]]
 clearance_height['FLAT']  = 0.1
 clearance_height['PALLET'] = 0.05
@@ -73,13 +73,10 @@ weight_array_com = np.array([1., 0., 1.0])
 weight_com = 1e4
 
 
-weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.1] * nv)
+weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.1] * (nv - 6) + [0.01] * nv)
 #added famping on haas to avoid lateral motion of the legs
-weight_array_postural[nv + 6] = 1
-weight_array_postural[nv + 6 + 3] = 1
-weight_array_postural[nv + 6 + 6] = 1
-weight_array_postural[nv + 6 + 9] = 1
-weight_postural = 1e-02
+
+weight_postural = 1e-01
 weight_joint_limits = 0*1e3
 
 weight_torque_limits = 0* 1e1

@@ -8,8 +8,8 @@ ENABLE_PLOT = 0 #'plot' in sys.argv
 
 
 q0 = [0, 0, 0.3, 0, 0, 0, 1,  0.75, -1.5, 0.75, -1.5,  -0.75, 1.5,  -0.75, 1.5]
-urdfFileName = "solo_fat.urdf" #no torque limits   
-urdfSubPath = "/robot_properties_solo/urdf/"
+urdfFileName = "solo12.urdf" #no torque limits   
+urdfSubPath = "/solo/robots/"
 
 #solver 
 th_stop = 1e-9
@@ -17,7 +17,7 @@ maxiter = 30
 reginit = .1
 
 #
-nv = 14
+nv = 18
 
 #task params
 jumpHeight =  0.15
@@ -74,13 +74,18 @@ weight_com = 1e4
 
 
 weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.1] * nv)
+#added famping on haas to avoid lateral motion of the legs
+weight_array_postural[nv + 6] = 1
+weight_array_postural[nv + 6 + 3] = 1
+weight_array_postural[nv + 6 + 6] = 1
+weight_array_postural[nv + 6 + 9] = 1
 weight_postural = 1e-02
 weight_joint_limits = 0*1e3
 
 weight_torque_limits = 0* 1e1
 weight_control = 1e-06
 weight_friction = 1e-1
-weight_clearance = 0e4
+weight_clearance = 1e2
 
 weight_foot_pos_impact_xy = 1e5
 weight_foot_pos_impact_z = 1e07

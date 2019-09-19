@@ -6,8 +6,8 @@ from crocoddyl import a2m, m2a
 import hi_jump.jump_functions as quadruped
 from hi_jump.jump_functions import interpolate_trajectory
 import hi_jump.utils as utils
-import optim_params_solo as conf
-#import optim_params_hyq as conf
+#import optim_params_solo as conf
+import optim_params_hyq as conf
 from tf.transformations import euler_from_quaternion
 import time
 import copy
@@ -59,10 +59,10 @@ if conf.ENABLE_DISPLAY:
     ROBOT.viewer.gui.setColor("world/pallet", (1.,0.,0.,1.))
     ROBOT.viewer.gui.applyConfiguration("world/pallet", (conf.pallet_pos[0], conf.pallet_pos[1], conf.pallet_pos[2], 0,0,0,1))
     ROBOT.viewer.gui.setLightingMode("world/pallet", "ON")
-
-    ROBOT.viewer.gui.addBox("world/pallettop", conf.pallet2_size[0], conf.pallet2_size[1], conf.pallet2_size[2], (1.0,0.2,.2,.5))
-    ROBOT.viewer.gui.setColor("world/pallettop", (1.,0.,0.,1.))
-    ROBOT.viewer.gui.applyConfiguration("world/pallettop", (conf.pallet2_pos[0], conf.pallet2_pos[1], conf.pallet2_pos[2], 0,0,0,1))
+    if conf.test_name == '2PALLETS' :
+        ROBOT.viewer.gui.addBox("world/pallettop", conf.pallet2_size[0], conf.pallet2_size[1], conf.pallet2_size[2], (1.0,0.2,.2,.5))
+        ROBOT.viewer.gui.setColor("world/pallettop", (1.,0.,0.,1.))
+        ROBOT.viewer.gui.applyConfiguration("world/pallettop", (conf.pallet2_pos[0], conf.pallet2_pos[1], conf.pallet2_pos[2], 0,0,0,1))
 
 #    ROBOT.viewer.gui.addLight("world/michilight", 0, 5.0, (1.,1.,1.,1.))
 
@@ -77,11 +77,13 @@ x0 = crocoddyl.m2a(np.concatenate([q0, v0]))
 # Setting up the 3d walking problem
 
 # get custom height map
-    
-#height_map = createPalletMap(conf.pallet_size[2], conf.edge_position, 
-#                             conf.height_map_resolution[0], conf.height_map_size)
-                             
-height_map = create2PalletMap(conf.pallet_size[2], conf.edge_position, conf.pallet2_size[0], conf.pallet2_size[2], conf.height_map_resolution[0], conf.height_map_size)   
+#1 pallet  
+if conf.test_name == 'PALLET' :
+    height_map = createPalletMap(conf.pallet_size[2], conf.edge_position, 
+                                 conf.height_map_resolution[0], conf.height_map_size)
+#2 pallet                             
+if conf.test_name == '2PALLET' :
+    height_map = create2PalletMap(conf.pallet_size[2], conf.edge_position, conf.pallet2_size[0], conf.pallet2_size[2], conf.height_map_resolution[0], conf.height_map_size)   
 
 #print height_map
 
@@ -167,7 +169,7 @@ x0 = ddp.xs[-1]
 # Display the entire motion
 if conf.ENABLE_DISPLAY:
     time.sleep(2.0)
-    ts = [30*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
+    ts = [10*m.timeStep if isinstance(m, crocoddyl.IntegratedActionModelEuler) else 0. for m in ddp.models()]
     utils.displayPhaseMotion(ROBOT, ddp.xs, ts)
 
 # Plotting the entire motion

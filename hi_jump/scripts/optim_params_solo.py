@@ -26,18 +26,27 @@ step = dict()
 clearance_height = dict()
 #test_name = 'FLAT'
 test_name = 'PALLET'
-pallet_size = [2.0, 2.0, 0.1]
-pallet_pos = [1.5, 0.0, pallet_size[2]/2]
+#test_name = '2PALLET'
 
 
-pallet2_size = [0.1, pallet_size[1]/2,  0.1]
-pallet2_pos = [0.55, 0.5, pallet2_size[2]/2]
+#1 pallet
+if (test_name == 'PALLET'):
+    pallet_size = [2.0, 2.0, 0.16]
+    pallet_pos = [1.5, 0.0, 0.08]
+#2 pallets
+if (test_name == '2PALLET'):
+    pallet_size = [2.0, 2.0, 0.1]
+    pallet_pos = [1.5, 0.0, pallet_size[2]/2]
+    pallet2_size = [0.1, pallet_size[1]/2,  pallet_size[2]/2]
+    pallet2_pos = [0.55, 0.5, pallet_size[2]+pallet2_size[2]/2]
 
 
 step['FLAT']  = [0.2, 0.0, 0.0]
-step['PALLET'] = [0.4, 0.0, pallet_size[2]]
+step['PALLET'] = [1.0, 0.0, pallet_size[2]]
+step['2PALLET'] = [1.0, 0.0, pallet_size[2]]
 clearance_height['FLAT']  = 0.1
 clearance_height['PALLET'] = 0.05
+clearance_height['2PALLET'] = 0.05
 
 
 params =[]

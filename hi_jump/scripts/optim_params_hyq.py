@@ -26,18 +26,27 @@ step = dict()
 clearance_height = dict()
 #test_name = 'FLAT'
 test_name = 'PALLET'
-pallet_size = [2.0, 2.0, 0.1]
-pallet_pos = [1.5, 0.0, pallet_size[2]/2]
+#test_name = '2PALLET'
 
 
-pallet2_size = [0.1, pallet_size[1]/2,  pallet_size[2]/2]
-pallet2_pos = [0.55, 0.5, pallet_size[2]+pallet2_size[2]/2]
+#1 pallet
+if (test_name == 'PALLET'):
+    pallet_size = [2.0, 2.0, 0.16]
+    pallet_pos = [1.5, 0.0, 0.08]
+#2 pallets
+if (test_name == '2PALLET'):
+    pallet_size = [2.0, 2.0, 0.1]
+    pallet_pos = [1.5, 0.0, pallet_size[2]/2]
+    pallet2_size = [0.1, pallet_size[1]/2,  pallet_size[2]/2]
+    pallet2_pos = [0.55, 0.5, pallet_size[2]+pallet2_size[2]/2]
 
 
 step['FLAT']  = [0.2, 0.0, 0.0]
 step['PALLET'] = [1.0, 0.0, pallet_size[2]]
+step['2PALLET'] = [1.0, 0.0, pallet_size[2]]
 clearance_height['FLAT']  = 0.1
 clearance_height['PALLET'] = 0.05
+clearance_height['2PALLET'] = 0.05
 
 
 params =[]
@@ -65,13 +74,18 @@ weight_com = 1e4
 
 
 weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.01] * (nv - 6) + [0.1] * nv)
+#added famping on haas to avoid lateral motion of the legs
+weight_array_postural[nv + 6] = 1
+weight_array_postural[nv + 6 + 3] = 1
+weight_array_postural[nv + 6 + 6] = 1
+weight_array_postural[nv + 6 + 9] = 1
 weight_postural = 1e-02
 weight_joint_limits = 0*1e3
 
 weight_torque_limits = 0* 1e1
 weight_control = 1e-06
 weight_friction = 1e-1
-weight_clearance = 1e4
+weight_clearance = 1e2
 
 weight_foot_pos_impact_xy = 1e5
 weight_foot_pos_impact_z = 1e07

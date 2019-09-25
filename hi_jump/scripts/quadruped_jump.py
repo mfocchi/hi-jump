@@ -233,3 +233,16 @@ np.savez(conf.data_file,
          q_des = q_cont, qd_des = qd_cont, tau_des = tau_cont,
          x_base_des=x_base_cont, v_base_des=v_base_cont, f_des=f_cont, euler_des=euler_cont,
          tau_gravity=tau_gravity)
+
+
+#majid traj
+q_nohaas = q_cont[:,(1,2, 4,5,7,8,10,11)]
+qd_nohaas = qd_cont[:,(1,2, 4,5,7,8,10,11)]
+tau_nohaas = tau_cont[:,(1,2, 4,5,7,8,10,11)]
+time  = np.linspace(0.0, conf.dt*q_cont.shape[0], q_cont.shape[0],  endpoint=False)
+
+
+np.savetxt(conf.data_file_q, np.hstack((time.reshape((q_nohaas.shape[0],1)), q_nohaas)), fmt="%f")
+np.savetxt(conf.data_file_qd,   np.hstack((time.reshape((q_nohaas.shape[0],1)), qd_nohaas)), fmt="%f")         
+np.savetxt(conf.data_file_tau,  np.hstack((time.reshape((q_nohaas.shape[0],1)), tau_nohaas)) , fmt="%f")         
+

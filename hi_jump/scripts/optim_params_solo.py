@@ -9,7 +9,7 @@ ENABLE_PLOT = 0 #'plot' in sys.argv
 
 q0 = [0, 0, 0.230085, 0, 0, 0, 1,  -0.2, 0.75, -1.5, -0.2,0.75, -1.5,  -0.2, -0.75, 1.5,  -0.2, -0.75, 1.5]
 urdfFileName = "solo12.urdf" #no torque limits   
-urdfSubPath = "/solo/robots/"
+urdfSubPath = "/solo_description/robots/"
 
 #solver 
 th_stop = 1e-9
@@ -24,27 +24,30 @@ jumpHeight =  0.15
 
 step = dict()
 clearance_height = dict()
-#test_name = 'FLAT'
-test_name = 'PALLET'
+test_name = 'FLAT'
+#test_name = 'PALLET'
 #test_name = '2PALLET'
 
+if (test_name == 'FLAT'):
+    step['FLAT']  = [0.0, 0.0, 0.0]
 
 #1 pallet
 if (test_name == 'PALLET'):
     pallet_size = [2.0, 2.0, 0.05]
     pallet_pos = [1.25, 0.0, 0.025]
+    step['PALLET'] = [0.5, 0.0, pallet_size[2]]
+    edge_position = pallet_pos[0]-0.5*pallet_size[0]-height_map_xy0[0]
 #2 pallets
 if (test_name == '2PALLET'):
     pallet_size = [2.0, 2.0, 0.1]
     pallet_pos = [1.5, 0.0, pallet_size[2]/2]
+    edge_position = pallet_pos[0]-0.5*pallet_size[0]-height_map_xy0[0]
     pallet2_size = [0.1, pallet_size[1]/2,  pallet_size[2]/2]
     pallet2_pos = [0.55, 0.5, pallet_size[2]+pallet2_size[2]/2]
+    step['2PALLET'] = [1.0, 0.0, pallet_size[2]]
 
 
-step['FLAT']  = [0.2, 0.0, 0.0]
-step['PALLET'] = [0.5, 0.0, pallet_size[2]]
-step['2PALLET'] = [1.0, 0.0, pallet_size[2]]
-clearance_height['FLAT']  = 0.1
+clearance_height['FLAT']  = 0.05
 clearance_height['PALLET'] = 0.05
 clearance_height['2PALLET'] = 0.05
 
@@ -119,7 +122,7 @@ cameraTF = None #[2., 2.68, 0.84, 0.2, 0.62, 0.72, 0.22]
 height_map_resolution = np.array([0.01, 0.01]) 
 height_map_xy0 = np.array([-0.5, 1.5])
 height_map_size = 3.0
-edge_position = pallet_pos[0]-0.5*pallet_size[0]-height_map_xy0[0]
+
 # Box Blur kernel
 kernel_size  = 3
 

@@ -111,6 +111,9 @@ dt  = 0.001
 
 
 data_file = test_name+'.npz'
+data_file_q = test_name+'_q.txt'
+data_file_qd = test_name+'_qd.txt'
+data_file_tau = test_name+'_tau.txt'
 #TODO robot  urdf
 #urdf = path + '/urdf/romeo.urdf'
 #srdf = path + '/srdf/romeo_collision.srdf'

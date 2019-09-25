@@ -28,6 +28,9 @@ test_name = 'FLAT'
 #test_name = 'PALLET'
 #test_name = '2PALLET'
 
+#orientReference = np.array([0.0, 0.0, 3.14])
+orientReference = np.array([0.0, 0.0, 0.0])
+
 if (test_name == 'FLAT'):
     step['FLAT']  = [0.0, 0.0, 0.0]
 
@@ -75,6 +78,8 @@ clearance = clearance_height[test_name]
 weight_array_com = np.array([1., 0., 1.0])
 weight_com = 1e4
 
+weight_array_orientation = np.array([0] * 3 + [1.] * 3 + [0.] * (nv - 6) + [0.0] * nv)
+weight_orientation =  0e2 #1e2
 
 #added famping on haas to avoid lateral motion of the legs
 weight_array_postural = np.array([0] * 3 + [0.] * 3 + [5.] * (nv - 6) + [1.] * nv)

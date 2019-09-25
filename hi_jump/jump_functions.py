@@ -8,6 +8,9 @@ from crocoddyl import (ActivationModelWeightedQuad, ActivationModelInequality, A
                        ImpulseModelMultiple, ImpulseModel3D, ShootingProblem, SolverDDP, SolverFDDP, StatePinocchio,
                        a2m, displayTrajectory, loadHyQ, m2a, CostDataForceLinearCone, ActionDataImpact,
                        CostModelNumDiff, CostDataNumDiff, CostModelHeightMapDistance)
+from tf.transformations import quaternion_from_euler
+from pinocchio.rpy  import rotate
+
 
 
 def plotSolution(rmodel, xs, us):
@@ -244,18 +247,44 @@ class SimpleQuadrupedalGaitProblem:
 
 
         f0 = np.matrix(conf.jumpLength).T
+#        footTask = [
+#            TaskSE3(pinocchio.SE3(np.eye(3), lfFootPos0 + f0), self.lfFootId),
+#            TaskSE3(pinocchio.SE3(np.eye(3), rfFootPos0 + f0), self.rfFootId),
+#            TaskSE3(pinocchio.SE3(np.eye(3), lhFootPos0 + f0), self.lhFootId),
+#            TaskSE3(pinocchio.SE3(np.eye(3), rhFootPos0 + f0), self.rhFootId)
+#        ]
+
+#
+
+        #orientTask = np.array([0.0,0.0,0.0,1.0])
+        roll = conf.orientReference[0]
+        pitch = conf.orientReference[1]
+        heading = conf.orientReference[2]
+        orientTask = np.array([quaternion_from_euler(heading,pitch,roll, axes='szyx')])
+
+
+        zrotate =rotate('z', heading) #rotate in place
+
+        lf_rotated = zrotate * lfFootPos0
+        rf_rotated = zrotate * rfFootPos0
+        lh_rotated = zrotate * lhFootPos0
+        rh_rotated = zrotate * rhFootPos0
+
+
+
         footTask = [
-            TaskSE3(pinocchio.SE3(np.eye(3), lfFootPos0 + f0), self.lfFootId),
-            TaskSE3(pinocchio.SE3(np.eye(3), rfFootPos0 + f0), self.rfFootId),
-            TaskSE3(pinocchio.SE3(np.eye(3), lhFootPos0 + f0), self.lhFootId),
-            TaskSE3(pinocchio.SE3(np.eye(3), rhFootPos0 + f0), self.rhFootId)
+            TaskSE3(pinocchio.SE3(np.eye(3), lf_rotated ), self.lfFootId),
+            TaskSE3(pinocchio.SE3(np.eye(3), rf_rotated ), self.rfFootId),
+            TaskSE3(pinocchio.SE3(np.eye(3), lh_rotated ), self.lhFootId),
+            TaskSE3(pinocchio.SE3(np.eye(3), rh_rotated ), self.rhFootId)
         ]
+
         landingPhase = [
             self.createImpactModel(conf, four_foot_support, footTask)
         ]
         f0[2] = df
         landed = [
-            self.createSwingFootModel(conf, four_foot_support, comTask=comRef + m2a(f0))
+            self.createSwingFootModel(conf, four_foot_support, comTask=comRef + m2a(f0), orientTask = orientTask)
             for k in range(conf.landingKnots)
         ]
         
@@ -272,7 +301,7 @@ class SimpleQuadrupedalGaitProblem:
         loco3dModel += flyingDownPhase
         loco3dModel += landingPhase
         loco3dModel += landed
-        
+
         problem = ShootingProblem(x0, loco3dModel, loco3dModel[-1])
         
 #        # QUICK FIX: Set contactData on CostDataForceLinearCone 
@@ -307,7 +336,7 @@ class SimpleQuadrupedalGaitProblem:
         return problem
 
  
-    def createSwingFootModel(self, conf, supportFootIds, comTask=None, clearanceTask=None, clearance = 0.0):
+    def createSwingFootModel(self, conf, supportFootIds, comTask=None, clearanceTask=None, clearance = 0.0, orientTask = None):
         """ Action model for a swing foot phase.
 
         :param timeStep: step duration of the action model
@@ -382,10 +411,17 @@ class SimpleQuadrupedalGaitProblem:
             
         stateReg = CostModelState(self.rmodel, self.state, self.rmodel.defaultState, actModel.nu,
                                   ActivationModelWeightedQuad(conf.weight_array_postural**2))
-        costModel.addCost("stateReg", stateReg, conf.weight_postural)                 
+        costModel.addCost("stateReg", stateReg, conf.weight_postural)
                   
         ctrlReg = CostModelControl(self.rmodel, actModel.nu)
         costModel.addCost("ctrlReg", ctrlReg, conf.weight_control)
+
+        if isinstance(orientTask, np.ndarray):
+            ref = np.zeros(actModel.nv+1 + actModel.nv)
+            ref[3:7] = orientTask
+            orientTrack = CostModelState(self.rmodel, self.state, ref, actModel.nu,
+                                      ActivationModelWeightedQuad(conf.weight_array_orientation ** 2))
+            costModel.addCost("orientTrack", orientTrack, conf.weight_orientation)
 
         # Creating the action model for the KKT dynamics with simpletic Euler
         # integration scheme

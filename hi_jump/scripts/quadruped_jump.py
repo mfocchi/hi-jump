@@ -11,7 +11,7 @@ import optim_params_hyq as conf
 from tf.transformations import euler_from_quaternion
 import time
 import copy
-from hi_jump.height_map_filter import createPalletMap, create2PalletMap, smoothHeightMap, plotHeightMap, computeDerivative
+from hi_jump.height_map_filter import createPalletMap,createFlatMap,  create2PalletMap, smoothHeightMap, plotHeightMap, computeDerivative
 from crocoddyl.cost import HeightMap
 import matplotlib.pyplot as plt
 
@@ -55,10 +55,11 @@ ROBOT =  utils.loadRobot(conf.urdfFileName, conf.urdfSubPath, conf.q0)
 
 if conf.ENABLE_DISPLAY:
     utils.setWhiteBackground(ROBOT)
-    ROBOT.viewer.gui.addBox("world/pallet", conf.pallet_size[0], conf.pallet_size[1], conf.pallet_size[2], (1.0,0.2,.2,.5))
-    ROBOT.viewer.gui.setColor("world/pallet", (1.,0.,0.,1.))
-    ROBOT.viewer.gui.applyConfiguration("world/pallet", (conf.pallet_pos[0], conf.pallet_pos[1], conf.pallet_pos[2], 0,0,0,1))
-    ROBOT.viewer.gui.setLightingMode("world/pallet", "ON")
+    if conf.test_name == 'PALLET' or conf.test_name == '2PALLETS' :
+        ROBOT.viewer.gui.addBox("world/pallet", conf.pallet_size[0], conf.pallet_size[1], conf.pallet_size[2], (1.0,0.2,.2,.5))
+        ROBOT.viewer.gui.setColor("world/pallet", (1.,0.,0.,1.))
+        ROBOT.viewer.gui.applyConfiguration("world/pallet", (conf.pallet_pos[0], conf.pallet_pos[1], conf.pallet_pos[2], 0,0,0,1))
+        ROBOT.viewer.gui.setLightingMode("world/pallet", "ON")
     if conf.test_name == '2PALLETS' :
         ROBOT.viewer.gui.addBox("world/pallettop", conf.pallet2_size[0], conf.pallet2_size[1], conf.pallet2_size[2], (1.0,0.2,.2,.5))
         ROBOT.viewer.gui.setColor("world/pallettop", (1.,0.,0.,1.))
@@ -86,13 +87,16 @@ if conf.test_name == '2PALLET' :
     height_map = create2PalletMap(conf.pallet_size[2], conf.edge_position, conf.pallet2_size[0], conf.pallet2_size[2], conf.height_map_resolution[0], conf.height_map_size)   
 
 #print height_map
+if conf.test_name == 'FLAT' :
+    height_map = createFlatMap(0.0, conf.height_map_resolution[0], conf.height_map_size)
+
 
 height_map_blur = smoothHeightMap(conf.kernel_size, height_map)
 height_map_der_x = computeDerivative(height_map_blur, conf.height_map_resolution[0],'X')
 height_map_der_y = computeDerivative(height_map_blur, conf.height_map_resolution[1],'Y')
-#plotHeightMap(height_map_blur) 
-   
+#plotHeightMap(height_map_blur)    
 heightMap = HeightMap(height_map_blur, conf.height_map_xy0, conf.height_map_resolution, height_map_der_x, height_map_der_y)
+
 #for x in np.arange(0.0, 0.5, 0.01):
 #    print "Height for x=%.2f: %.2f"%(x, heightMap.getHeight(np.array([x,0.0])))
     

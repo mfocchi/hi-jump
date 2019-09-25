@@ -141,7 +141,11 @@ def plotHeightMap(map, llimit = 0, ulimit = 1):
 
     plt.show()
     
-    
+
+def createFlatMap(height, height_map_resolution, height_map_size):    
+    number_of_cells = (int)(height_map_size / height_map_resolution)
+    height_map = height*np.ones((number_of_cells,number_of_cells))
+    return height_map
 
 def createPalletMap(pallet_height, edge_position, height_map_resolution, height_map_size):
     #buld custom height map

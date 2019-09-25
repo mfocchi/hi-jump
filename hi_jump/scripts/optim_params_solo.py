@@ -76,11 +76,11 @@ weight_array_com = np.array([1., 0., 1.0])
 weight_com = 1e4
 
 
-weight_array_postural = np.array([0] * 3 + [0.] * 3 + [.1] * (nv - 6) + [0.01] * nv)
 #added famping on haas to avoid lateral motion of the legs
+weight_array_postural = np.array([0] * 3 + [0.] * 3 + [5.] * (nv - 6) + [1.] * nv)
 
-weight_postural = 1e-01
-weight_joint_limits = 0*1e3
+weight_postural = 5e-01
+weight_joint_limits = 4*1e3
 
 weight_torque_limits = 0* 1e1
 weight_control = 1e-06
